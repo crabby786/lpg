@@ -1,0 +1,759 @@
+$(function () {
+  var isTesting = false;
+  const response = {}
+
+  const baseurl = "https://cs-action.aramco.com/SASJobExecution";
+  var getNominationUrl = `${baseurl}/?_program=%2FSTSP%20LPG%20Demand%20Forecasting%2FCodes%2FWeb%20Interface%2FAPI%20Jobs%2FCreate%20SAP%20Nom%20Dropdown%20and%20Read%20Data%20API`
+
+  var saveUrl = `${baseurl}/?_program=%2FSTSP%20LPG%20Demand%20Forecasting%2FCodes%2FWeb%20Interface%2FAPI%20Jobs%2FCreate%20SAP%20Nomination%20-Update`
+  var createSAPNominationUrl = `${baseurl}/?_program=%2FSTSP%20LPG%20Demand%20Forecasting%2FCodes%2FWeb%20Interface%2FAPI%20Jobs%2FCreate%20SAP%20Nom%20-%20Load%20to%20SAP%20-%209_4`;
+  var recallCosmdUrl = `${baseurl}/`;
+
+  async function sendRequest(url, method, data) {
+    const d = $.Deferred();
+
+    if (data === undefined) {
+      data = "";
+    }
+    var myToken = await sasgetCSRFToken();
+
+    $.ajax(url, {
+      method,
+      data,
+      // xhrFields: { withCredentials: false },
+      contentType: 'application/json',
+      cache: false,
+      beforeSend: function (xhr) {
+        xhr.setRequestHeader('X-CSRF-Token', myToken);
+        xhr.setRequestHeader('X-CSRF-Header', 'X-CSRF-Token');
+        $('.overlay').show();
+      },
+      complete: (xhr, status) => {
+        $('.overlay').hide();
+      }
+    }).done((result) => {
+      d.resolve(result);
+    }).fail((xhr) => {
+      d.reject(xhr.responseJSON ? xhr.responseJSON.Message : xhr.statusText);
+    });
+    return d.promise();
+
+  }
+
+  async function sasgetCSRFToken() {
+    const csrfURL = `${baseurl}/csrf`
+    const csrfParameters = { method: "GET", credentials: "include" }
+    const csrfRequest = await fetch(csrfURL, csrfParameters)
+    const csrfToken = await csrfRequest.headers.get("X-CSRF-TOKEN")
+    return csrfToken
+  }
+
+
+
+
+  function stringToJsonMapper(obj, key, config) {
+    let { labelIndex, valueIndex, value2Index } = config || { labelIndex: 1, valueIndex: 0, value2Index: 2 } // for later user
+    var newObj = obj?.[key]
+    try {
+      newObj = obj?.[key] ? JSON.parse(obj?.[key]) : obj?.[key];
+
+      newObj = newObj?.length ? newObj?.map(str => {
+        let values = str.split("-")
+        return { label: values[labelIndex] || "", value: values[valueIndex] || "", value2: (values[value2Index] || "") }
+      }) : newObj;
+    }
+    catch (err) {
+      console.log("err11", err)
+    }
+    finally {
+      return newObj
+
+    }
+  }
+  var handleResp = (resp) => {
+
+
+    // show planning month on page load
+    let planningMonth = resp?.DATA[0]?.PLANNING_MONTH
+    $("#datepicker1").html(convertMonthYear(planningMonth));
+
+    
+    var mappedData = resp?.DATA?.map(obj => {
+      let config = { labelIndex: 1, valueIndex: 0, value2Index: 2 }
+      let isDummy = obj?.COLOAD_GROUP_NAME == "DUMMY"
+      let DUMMY_CUSTOMER_NM = stringToJsonMapper(obj, 'DUMMY_CUSTOMER_NM', config);
+      let DUMMY_CONTRACT_TYPE = stringToJsonMapper(obj, 'DUMMY_CONTRACT_TYPE', { ...config, labelIndex: isDummy ? 1 : 0 });
+      let DUMMY_CONTRACT_ID = stringToJsonMapper(obj, 'DUMMY_CONTRACT_ID', {
+        ...config,
+        labelIndex: isDummy ? 2 : 1,  //id
+        valueIndex: isDummy ? 1 : 0,  //contract type
+        value2Index: 0,
+      });
+      let CONTRACT_TYPE = obj?.CONTRACT_TYPE;
+      let CONTRACT_ID = obj?.CONTRACT_ID;
+      let filteredContractId = []
+      if (!CONTRACT_TYPE && DUMMY_CONTRACT_TYPE?.length && !isDummy) {
+        CONTRACT_TYPE = DUMMY_CONTRACT_TYPE[0]?.label;
+
+      }
+
+      if (!CONTRACT_ID && DUMMY_CONTRACT_ID?.length && !isDummy) {
+        filteredContractId = DUMMY_CONTRACT_ID?.filter(data => {
+          return data?.value2 == CONTRACT_TYPE;
+        })
+        filteredContractId?.length < 2 &&
+          (CONTRACT_ID = filteredContractId[0]?.label)
+      }
+
+      return {
+        ...obj,
+        DUMMY_CUSTOMER_NM,
+        DUMMY_CONTRACT_TYPE,
+        CONTRACT_TYPE,
+        CONTRACT_ID,
+        DUMMY_CONTRACT_ID
+      }
+    }) || [];
+
+    nomGridinstance.option('dataSource', mappedData);
+
+  }
+
+  var selectedRowsData = [];
+  var isSapSubmitting = false;
+  var isSaveSubmitting = false;
+  var isUpdated = false;
+  var validationGroup = "validationGroup";
+  var COLORS = {
+    yellow: "#fff2cc",
+    error: "#d9534f",
+    lightBlue: "#c6f0ff",
+    lightBlue2: "rgb(222 239 245)",
+    grey: "rgb(236 236 236)",
+  }
+  var mappedResponse = [];
+
+  var properties = {
+    CONTRACT_TYPE: 'CONTRACT_TYPE',
+    CONTRACT_ID: 'CONTRACT_ID',
+    CUSTOMER_NM: 'CUSTOMER_NM',
+    CUSTOMER_ID: 'CUSTOMER_ID',
+    CUSTOMER_ID: 'CUSTOMER_ID',
+  }
+  function mapCellTemplate(cellElement, cellInfo) {
+
+    var columnName = cellInfo?.column?.dataField
+
+    var { DUMMY_CONTRACT_TYPE, DUMMY_CONTRACT_ID, DUMMY_CUSTOMER_NM, COLOAD_GROUP_NAME, MESSAGE_TYPE, COLOAD_FLAG, NOMINATION_TEMP_KEY } = cellInfo?.data || {}
+    var { CONTRACT_TYPE, CONTRACT_ID, CUSTOMER_NM, CUSTOMER_ID: CUSTOMER_ID_LABEL } = properties
+
+    // if(NOMINATION_TEMP_KEY == 21)
+
+    var isDummy = COLOAD_GROUP_NAME == "DUMMY";
+    const isCustomerName = columnName == CUSTOMER_NM;
+    const isSapCreated = MESSAGE_TYPE == "S";
+    var CUSTOMER_ID = cellInfo.row.data.CUSTOMER_ID
+    let list = columnName == CONTRACT_TYPE ? DUMMY_CONTRACT_TYPE : columnName == CONTRACT_ID ? DUMMY_CONTRACT_ID : DUMMY_CUSTOMER_NM;
+    var contractTypeValue = cellInfo.row.data.CONTRACT_TYPE
+
+
+    if (
+      (cellInfo?.value || COLOAD_FLAG == 2)
+      && (!list?.length || (list?.length && MESSAGE_TYPE == "S"))
+      && (!isCustomerName || (isCustomerName && !isDummy))
+    )
+      return cellElement.text(cellInfo?.value);
+
+    var filteredList = list?.length ? [...list] : [];
+
+    // component.cellValue(cellInfo?.rowIndex, CUSTOMER_ID_LABEL)
+    if (!isCustomerName) {
+      filteredList = list?.length ? getFilteredList(list) : []
+    }
+
+    return $('<div>').dxSelectBox({
+      dataSource: filteredList,
+      value: isCustomerName ? CUSTOMER_ID : cellInfo.value,
+      itemTemplate(data) {
+        return `<a title='${data?.label}'>${data?.label}</a>`;
+      },
+      valueExpr: isCustomerName ? 'value' : 'label',
+      placeholder: isCustomerName ? cellInfo?.data?.CUSTOMER_NM : 'Select',
+      displayExpr: 'label',
+      onValueChanged: (e) => {
+        cellInfo.component.beginUpdate()
+        cellInfo.component.cellValue(cellInfo?.rowIndex, isCustomerName ? CUSTOMER_ID_LABEL : columnName, e.value)
+        // for cust name only
+        var dropList = e.component?.option("dataSource");
+        if (isCustomerName) {
+
+          let selectedItem = dropList?.length ? dropList?.find(obj => obj?.value == e?.value) : {};
+
+          cellInfo.component.cellValue(cellInfo?.rowIndex, CUSTOMER_NM, (selectedItem?.label || ""))
+
+          let newContractType = DUMMY_CONTRACT_TYPE?.find(obj => obj?.value == selectedItem?.value)?.label
+          cellInfo.component.cellValue(cellInfo?.rowIndex, CONTRACT_TYPE, (newContractType || ""))
+
+          let filteredContrId = DUMMY_CONTRACT_ID?.filter(obj => obj?.value == newContractType && obj?.value2 == selectedItem?.value)
+          if (filteredContrId?.length < 2) {
+            let newContractId = filteredContrId[0]?.label;
+            cellInfo.component.cellValue(cellInfo?.rowIndex, CONTRACT_ID, (newContractId || ""))
+          }
+        }
+        if (columnName == CONTRACT_TYPE && filteredList?.length) {
+
+          let filteredContrId = DUMMY_CONTRACT_ID?.filter(obj => {
+            return isDummy ? (obj?.value == e.value
+              && CUSTOMER_ID == obj?.value2) : (obj?.value == e.value)
+
+          })
+          if (filteredContrId?.length < 2) {
+            let newContractId = filteredContrId[0]?.label
+            cellInfo.component.cellValue(cellInfo?.rowIndex, CONTRACT_ID, (newContractId || ""))
+
+          }
+        }
+
+        cellInfo.component.saveEditData();
+        cellInfo.component.endUpdate()
+      },
+    });
+
+
+    function getFilteredList(dataList) {
+      dataList = dataList?.filter(obj => {
+        const isValidCustomer = !isDummy || obj?.value == CUSTOMER_ID;
+        if (columnName == CONTRACT_TYPE) // for contract type
+          return isValidCustomer;
+        else if (columnName == CONTRACT_ID) // for contract id
+        {
+
+          return (!isDummy || obj?.value2 == CUSTOMER_ID) && contractTypeValue && obj?.value == contractTypeValue;
+        }
+        else return false
+      });
+      return dataList
+    }
+  }
+  const coloadColTemplate = (e, data) => {
+    let isCoload = data?.data.COLOAD_FLAG == 1 && data?.data?.MESSAGE_TYPE !== "S"
+    if (isCoload) {
+      e.html(`<div style="background:#fff; height:33px; line-height: 33px;   border-radius: 3px;  " > ${data?.value} </div>`)
+
+    } else {
+      e.text(data?.value);
+    }
+    return e;
+  }
+
+  var nomGridinstance = $("#dataGrid").dxDataGrid({
+    dataSource: mappedResponse,
+    rowAlternationEnabled: true,
+    wordWrapEnabled: true,
+    columnAutoWidth: true,
+    showBorders: true,
+    selection: {
+      caption: "Select All",
+      showCheckBoxesMode: "always",
+      mode: "multiple"
+    },
+    editing: {
+      allowUpdating: function (e) {
+        const { component } = e || {};
+        const { CUSTOMER_ID, COLOAD_FLAG, MESSAGE_TYPE } = e.row.data || {};
+        let isEditable = false;
+        let isDataRow = e.row.rowType == "data";
+        if (!CUSTOMER_ID && isDataRow) {
+          isEditable = true;
+        }
+        if ((COLOAD_FLAG == 1 && MESSAGE_TYPE != "S") && isDataRow) {
+          isEditable = true;
+        }
+        return isEditable;
+      },
+      mode: "cell" // 'batch' | 'cell' | 'form' | 'popup'
+    },
+    onRowValidating: function (e) {
+      // if (!e.isValid && !isSaveSubmitting ) {
+      //     e.isValid = true;
+      //     e.errorText = "";
+      // }
+    },
+    onEditorPreparing: function (e) {
+      const { dataField } = e || {};
+      if (dataField) {
+
+        if (dataField === "CUSTOMER_LIFTING_PROPANE") {
+          e.cancel = e.row.data.COLOAD_FLAG !== 1
+
+        }
+      }
+
+    },
+    onCellPrepared: function (e) {
+      if (e.rowType == "header") {
+        e.cellElement.css("text-align", "center");
+        e.cellElement.css("color", "#fff");
+        e.cellElement.css("background-color", "#00A3E0");
+      }
+      if (e.rowType == "data") {
+
+        // hide checkbox for coload subgroups
+        if (e?.columnIndex == 0 && e.column.type == "selection" && (e.data.COLOAD_FLAG == 1 || e?.data?.MESSAGE_TYPE == "S"))
+          $(e.cellElement).find('.dx-checkbox').css("visibility", "hidden")
+
+        e.cellElement.css("text-align", "center");
+        // mark non-editable fields as gray in propane KMT
+        if (
+          e.column.allowEditing &&
+          (e.column?.dataField == "CUSTOMER_LIFTING_PROPANE" ||
+            e.column?.dataField == "CUSTOMER_LIFTING_BUTANE") &&
+          (e?.data.COLOAD_FLAG == 1 && e?.data?.MESSAGE_TYPE != "S")
+        ) {
+
+          e.cellElement.css("background", COLORS.lightBlue2);
+
+        }
+        else if (e?.data.COLOAD_FLAG == 1) {
+          e.cellElement.css("background", COLORS.lightBlue2);
+        };
+
+      }
+    },
+    onRowUpdated(e) {
+      let btns = actionBtns.option('items[1]')
+      actionBtns.option('items[1]', { ...btns, disabled: true })
+    },
+    onSelectionChanged(selectedItems) {
+
+      selectedRowsData = selectedItems?.selectedRowsData;
+      var coloadParents = selectedRowsData?.filter(data => data?.COLOAD_GROUP_NAME && data.COLOAD_FLAG == 2);
+      var subGroupList = []
+      if (coloadParents?.length)
+        coloadParents?.forEach(data => {
+          let dataSource = nomGridinstance.option("dataSource");
+          let subgroups = dataSource?.filter(obj => {
+            let isExist = obj?.MESSAGE_TYPE !== "S" && obj?.COLOAD_GROUP_NAME == data?.COLOAD_GROUP_NAME && obj.COLOAD_FLAG == 1;
+            return isExist
+          });
+          subGroupList = [...subGroupList, ...subgroups]
+
+        });
+      if (subGroupList?.length) {
+        subGroupList?.forEach(data => {
+          let isExist = selectedRowsData?.some(obj => obj?.CUSTOMER_ID == data?.CUSTOMER_ID)
+          if (!isExist)
+            selectedRowsData.push(data)
+
+        })
+      }
+
+    },
+    scrolling: {
+      useNative: false,
+      scrollByContent: true,
+      scrollByThumb: true,
+      showScrollbar: "onHover" // or "onScroll" | "always" | "never"
+    },
+    paging: { enabled: false },
+    groupPanel: {
+      visible: false // or "auto"
+    },
+    columns: [
+      {
+        dataField: "TERMINAL_NM",
+        fixed: true,
+        caption: "Terminal",
+        allowEditing: false,
+      },
+      {
+        dataField: "CUSTOMER_ID",
+        fixed: true,
+        visible: false
+      },
+      {
+        dataField: "CUSTOMER_NM",
+        fixed: true,
+        caption: "Customer",
+        minWidth: 140,
+        allowEditing: false,
+        cellTemplate: mapCellTemplate
+
+      },
+      {
+        dataField: "NOMINATION_DATE",
+        fixed: true,
+        allowEditing: false,
+        caption: "Date"
+      },
+      {
+        dataField: "NOMINATION_TEMP_KEY",
+        fixed: true,
+        allowEditing: false,
+        caption: "Temp Nom. Key"
+      },
+      {
+        allowEditing: false,
+        caption: "Propane BBL",
+        calculateCellValue: function (row) {
+          return Math.round(+row?.CUSTOMER_LIFTING_PROPANE * 12.446 * 1000) || 0;
+        }
+      },
+      {
+        allowEditing: false,
+        caption: "Butane BBL", // todo tobe calculated
+        calculateCellValue: function (row) {
+          return Math.round(+row?.CUSTOMER_LIFTING_BUTANE * 10.896 * 1000) || 0;
+        }
+      },
+      {
+        dataField: "CUSTOMER_LIFTING_PROPANE",
+        caption: "Propane KMT",
+        cellTemplate: coloadColTemplate
+
+      },
+      {
+        dataField: "CUSTOMER_LIFTING_BUTANE",
+        caption: "Butane KMT",
+        // showEditorAlways:true,
+        cellTemplate: coloadColTemplate
+      },
+      {
+        // dataField: "DUMMY_CONTRACT_ID",
+        dataField: "TOLERANCE_PROPANE",
+        allowEditing: false,
+        // calculateCellValue: (row)=> {
+        //   let data =  row?.DUMMY_CONTRACT_ID?.length ? row?.DUMMY_CONTRACT_ID?.filter(obj=> obj?.value == 'SPOT' ) : [];
+        //   return data?.length ? JSON.stringify(data) : '-'
+        // } //for testing ,
+        caption: "Propane Tolerance"
+      },
+      {
+        dataField: "CONTRACT_TYPE",
+        minWidth: 120,
+        caption: "Contract Type",
+        allowEditing: false,
+        cellTemplate: mapCellTemplate
+      },
+      {
+        dataField: "CONTRACT_ID",
+        caption: "Contract ID",
+        minWidth: 140,
+        allowEditing: false,
+        cellTemplate: mapCellTemplate
+      },
+      {
+        caption: "Sales Order Number",
+        allowEditing: false,
+        columns: [
+          {
+            dataField: "SALES_ORDER_NOM_PROPANE",
+            allowEditing: false,
+            caption: "Propane"
+          },
+          {
+            dataField: "SALES_ORDER_NOM_BUTANE",
+            allowEditing: false,
+            caption: "Butane"
+          }
+        ]
+      },
+      {
+        dataField: "SAP_NOM_KEY",
+        allowEditing: false,
+        caption: "SAP Nomination Key"
+      },
+      {
+        dataField: "SAP_NOM_STATUS",
+        allowEditing: false,
+        caption: "SAP Nomination Status",
+        cellTemplate: (cellElement, cellInfo) => {
+          let { MESSAGE_TYPE, MESSAGE_TEXT, SAP_NOM_STATUS } = cellInfo.data || {};
+          let id = `status${cellInfo?.rowIndex}`
+
+          if (MESSAGE_TYPE == 'E') {
+            let txt = MESSAGE_TEXT.replaceAll('\\n ', '<br>');
+            $(cellElement).after(`<div id = "tooltip${cellInfo?.rowIndex}" class="text-start" >${txt}  </div>`);
+
+            $(`#tooltip${cellInfo?.rowIndex}`).dxTooltip({
+              target: `#${id}`,
+              showEvent: 'mouseenter',
+              hideEvent: 'mouseleave',
+              hideOnOutsideClick: false,
+            });
+          }
+
+
+          return $(`<div id = "${id}" >${SAP_NOM_STATUS}  </div>`)
+        }
+      }
+    ]
+    // summary: {
+    //   groupItems:
+    // }
+  }).dxDataGrid("instance");
+
+  async function getData() {
+    try {
+      var resp = await sendRequest(`${getNominationUrl}`, "GET")
+      handleResp(resp)
+
+    } catch (error) {
+      $('.overlay').hide();
+      isTesting && (handleResp(response))
+      console.log("getREadApi error", error);
+    }
+  }
+  function modifyData(list) {
+    return list?.map(obj => {
+      let newData = { ...obj };
+      // removeUnwantedData
+      delete newData.DUMMY_CONTRACT_ID
+      delete newData.DUMMY_CONTRACT_TYPE
+      delete newData.DUMMY_CUSTOMER_NM;
+
+      let planningMonth = moment().add(1, "month").format("MMM") + moment().format("YYYY");
+      planningMonth = planningMonth.toUpperCase()
+      // add additional fields
+      newData.PLANNING_MONTH = planningMonth
+
+      return newData
+    })
+  }
+
+  var errors = []
+  var errorTypes = {
+    COLOAD_GROUP_KMT: 'COLOAD_GROUP_KMT'
+  }
+  var toastTypes = {
+    success: 'success',
+    error: 'error'
+  }
+  $('#dataGrid').append(`<div id="toast"></div>`)
+  var toast = $('#toast').dxToast({ displayTime: 5000, closeOnClick: true, position: 'top center' }).dxToast('instance');
+  function showToast(type, message) {
+    toast.option({ message, type });
+    toast.show();
+  };
+
+  function checkDataSource(list) {
+    var coloadParents = list?.filter(data => data?.COLOAD_GROUP_NAME && data.COLOAD_FLAG == 2);
+    var subGroupList = []
+    var isValid = true, msg = '';
+    if (coloadParents?.length) {
+      coloadParents?.forEach(data => {
+        let { CUSTOMER_LIFTING_PROPANE, CUSTOMER_LIFTING_BUTANE, COLOAD_GROUP_NAME, CUSTOMER_NM, CUSTOMER_ID } = data
+        let dataSource = nomGridinstance.option("dataSource");
+        let subgroups = dataSource?.filter(obj => {
+          let isExist = obj?.COLOAD_GROUP_NAME == data?.COLOAD_GROUP_NAME && obj.COLOAD_FLAG == 1;
+          return isExist
+        });
+        checkKmtWithColoadGroup("CUSTOMER_LIFTING_PROPANE");
+        checkKmtWithColoadGroup("CUSTOMER_LIFTING_BUTANE");
+
+        function checkKmtWithColoadGroup(validateKey) {
+          var sum = 0;
+          for (let i = 0; i < subgroups.length; i++) {
+            const item = subgroups[i];
+            sum += item?.[validateKey]
+
+          }
+
+          if (isValid) {
+            let isMatch = data?.[validateKey] === sum;
+            if (!isMatch) {
+              isValid = false;
+              errors.push({ type: errorTypes.COLOAD_GROUP_KMT, CUSTOMER_ID, msg: `${validateKey} does not match with coload group ${CUSTOMER_NM}` });
+
+              msg = `KMT values does not match with coload group, please check`
+
+            }
+
+          }
+        }
+      });
+
+
+    }
+
+    // check for null values
+    if (isValid) {
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i];
+
+        if (item?.CUSTOMER_ID.includes("PROPANE") && item?.CUSTOMER_ID.includes("BUTANE")) {
+          msg = `Customer name is empty, Please check`;
+          isValid = false
+          break;
+        }
+        if ((item?.CUSTOMER_LIFTING_PROPANE === null || item.CUSTOMER_LIFTING_PROPANE === undefined) && item?.COLOAD_FLAG == 1) {
+          msg = `Propane KMT is empty, Please check`;
+          isValid = false
+          break;
+        }
+        if ((item?.CUSTOMER_LIFTING_BUTANE === null || item.CUSTOMER_LIFTING_BUTANE === undefined) && item?.COLOAD_FLAG == 1) {
+          msg = `Butane KMT is empty, Please check`;
+          isValid = false
+          break;
+        }
+        if (!item?.CONTRACT_ID && item?.COLOAD_FLAG != 2) {
+
+          msg = `Contract ID not selected, please select`;
+          isValid = false
+          break;
+        }
+      }
+
+    }
+    return { isValid, msg }
+
+  }
+  async function onSaveData(e) {
+    // for coload groups , add rows for children
+    // filter created SAP data
+    try {
+      isSaveSubmitting = true
+      let dataSource = nomGridinstance.option("dataSource");
+      dataSource = dataSource?.filter(obj => obj?.MESSAGE_TYPE !== "S")
+      if (dataSource?.length) {
+        dataSource = modifyData(dataSource);
+        // let validationObj = checkDataSource(dataSource);
+
+        // if (!validationObj?.isValid) {
+        //   let msg = validationObj?.msg;
+        //   // alert("Data is not valid, " + msg)
+        //   showToast(toastTypes.error, msg)
+        //   return
+        // }
+
+
+        let payload = JSON.stringify({ DATA: dataSource })
+        var resp = await sendRequest(`${saveUrl}`, "POST", payload)
+
+        // disable create button
+        let btns = actionBtns.option('items[2]')
+        actionBtns.option('items[2]', { ...btns, disabled: false })
+
+        if (resp?.Message) {
+
+          showToast(toastTypes.success, 'Data saved successfully')
+        }
+        console.log("save resp", resp);
+
+      }
+
+    } catch (error) {
+      console.log("saveDataApi error", error);
+    }
+  }
+
+  async function recallCosmd(e) {
+    // for coload groups , add rows for children
+    // filter created SAP data
+    try {
+      isSaveSubmitting = true
+      let dataSource = nomGridinstance.option("dataSource");
+      dataSource = dataSource?.filter(obj => obj?.MESSAGE_TYPE !== "S")
+      if (dataSource?.length) {
+        dataSource = modifyData(dataSource);
+        let validationObj = checkDataSource(dataSource);
+
+        if (!validationObj?.isValid) {
+          let msg = validationObj?.msg;
+          // alert("Data is not valid, " + msg)
+          showToast(toastTypes.error, msg)
+          return
+        }
+
+        let payload = JSON.stringify({ DATA: dataSource })
+        var resp = await sendRequest(`${recallCosmdUrl}`, "POST", payload)
+
+        // disable create button
+        let btns = actionBtns.option('items[1]')
+        actionBtns.option('items[1]', { ...btns, disabled: false })
+
+        if (resp?.Message) {
+
+          showToast(toastTypes.success, 'Data saved successfully')
+        }
+        console.log("save resp", resp);
+
+      }
+
+    } catch (error) {
+      console.log("saveDataApi error", error);
+    }
+  }
+
+  async function createSAP() {
+    // for coload groups , add rows for children
+    // filter data based on checkbox & prev done
+    // make rows readonly for success rows
+    try {
+      isSapSubmitting = true
+      let dataSource = nomGridinstance.option("dataSource");
+      let DATA = selectedRowsData?.filter(obj => obj?.MESSAGE_TYPE !== "S");
+      if (!DATA?.length) {
+        showToast(toastTypes.error, 'Please select a row');
+        return
+      } else {
+        DATA = modifyData(DATA)
+      }
+
+
+      let validationObj = checkDataSource(DATA);
+
+      if (!validationObj?.isValid) {
+        let msg = validationObj?.msg;
+        // alert("Data is not valid, " + msg)
+        showToast(toastTypes.error, msg)
+        return
+      }
+      if (!validationObj?.isValid) {
+        let msg = validationObj?.msg;
+        // alert("Data is not valid, " + msg)
+        showToast(toastTypes.error, msg)
+        return
+      }
+
+      let payload = JSON.stringify({ DATA })
+      var resp = await sendRequest(`${createSAPNominationUrl}`, "POST", payload);
+      console.log("SAP resp", resp);
+      getData()
+
+    } catch (error) {
+      $('.overlay').hide();
+      console.log("saveSAPApi error", error);
+    }
+  }
+  getData()
+
+
+  const btnsConfig = [
+    {
+      icon: 'fa fa-undo',
+      alignment: 'Recall',
+      hint: 'Recall COSMD',
+      onClick: recallCosmd
+    },
+    {
+      icon: 'fa fa-save',
+      alignment: 'Save',
+      hint: 'Save',
+      onClick: onSaveData
+    },
+    {
+      icon: 'export',
+      alignment: 'export',
+      hint: 'Create SAP Nominations',
+      onClick: createSAP
+    },
+  ]
+
+  var actionBtns = $('#actionBtns').dxButtonGroup({
+    items: btnsConfig,
+    keyExpr: 'alignment',
+    stylingMode: 'outlined',
+  }).dxButtonGroup("instance");
+
+});

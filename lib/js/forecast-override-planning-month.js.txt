@@ -1,0 +1,740 @@
+
+var response = {}
+var isTesting = false;
+var isPlanningMonth = true;
+let forecastLevels = ["NORMAL", "LCL", "UCL"];
+let customerGroups = [ "ALL", "NON-SABIC", "SABIC", "SAUDI ARAMCO"];
+
+const products = ["PROPANE", "BUTANE", "NGL"];
+
+const tabs = [{
+  id: 0,
+  text: "EAST",
+  content: "User tab content",
+},
+{
+  id: 1,
+  text: "WEST",
+  content: "Comment tab content",
+},];
+
+const baseurl = "https://sas-dev.aramco.com.sa/SASJobExecution";
+
+$('#gridContainer').after(`<div id="toast"></div>`)
+var toast = $('#toast').dxToast({ displayTime: 5000, closeOnClick: true, position: 'top center' }).dxToast('instance');
+function showToast(type, message) {
+  toast.option({ message, type });
+  toast.show();
+}
+
+let { year, futureMonthName, monthName, shortMonth, shortFutureMonth } = getActiveMonth();
+let readMonth = (isPlanningMonth ? shortFutureMonth?.toUpperCase() : shortMonth?.toUpperCase()) + year;
+
+const forecastListBaseUrl = `${baseurl}/?_program=%2FSTSP%20LPG%20Demand%20Forecasting%2FCodes%2FWeb%20Interface%2FAPI%20Jobs%2FAPI%20Domestic_Demand_Over_Screen%20-%20READ&MONTH=${readMonth}`;
+
+const saveOverrideUrl = `${baseurl}/?_program=%2FSTSP%20LPG%20Demand%20Forecasting%2FCodes%2FWeb%20Interface%2FAPI%20Jobs%2FUpdate_Domestic_Demand_Save_Overrides_API&MONTH=${readMonth}`;
+
+const runForecastUrl = `${baseurl}/?_program=%2FSTSP%20LPG%20Demand%20Forecasting%2FCodes%2FWeb%20Interface%2FAPI%20Jobs%2FUpdate_Domestic_Demand_Run_Forecast_API&MONTH=${readMonth}`;
+const updateSapUrl = `${baseurl}/?_program=%2FSTSP%20LPG%20Demand%20Forecasting%2FCodes%2FWeb%20Interface%2FAPI%20Jobs%2FUpdate_Domestic_Demand_Update_In_SAP_API&MONTH=${readMonth}`;
+
+function getActiveMonth() {
+  let year = moment().format("YYYY");
+  let monthName = moment().format("MMMM");
+  let futureMonthName = moment().add(1, "month").format("MMMM");
+  return {
+    year,
+    futureMonthName,
+    monthName,
+    shortMonth: moment().format("MMM"),
+    shortFutureMonth: moment().add(1, "month").format("MMM"),
+  };
+}
+function setHeaderDate() {
+  var planningMonth =
+    (isPlanningMonth ? futureMonthName : monthName) + " " + year;
+  $("#datepicker1").html(planningMonth);
+}
+
+$(() => {
+  var actionBtns = $('#table-action-btn-wrap').dxButtonGroup({
+    items: [
+      {
+        icon: "fa fa-arrow-circle-o-right",
+        hint: "Run Forecast",
+        onClick: runForecast,
+      },
+      {
+        icon: "close",
+        hint: "Clear Override",
+        onClick: clearOverride,
+      },
+      {
+        icon: "fa fa-save",
+        hint: "Save",
+        onClick: saveOverride,
+      },
+      {
+        icon: "fa fa-send",
+        hint: "Update in SAP",
+        onClick: updateSAP,
+      },
+    ],
+    keyExpr: "style",
+    selectionMode: "multiple",
+    stylingMode: "outlined",
+  }).dxButtonGroup("instance");
+
+  const regionTabs = $("#region-tabs > .tabs-container")
+    .dxTabs({
+      dataSource: tabs,
+      selectedIndex: 0,
+      animationEnabled: true,
+      swipeEnabled: true,
+      onItemClick(e) {
+        regionTabs.option("selectedIndex", e.itemData.id);
+        handleFilter();
+      },
+    })
+    .dxTabs("instance");
+
+  setHeaderDate();
+
+  //     Filter dropdowns
+
+  let productFilter = $("#productFilter").dxSelectBox({
+    items: products,
+    value: products[0],
+    placeholder: "Choose Product",
+    onValueChanged(data) {
+      handleFilter();
+    },
+  }).dxSelectBox("instance");
+  let forecastLvlFilter = $("#forecastLvlFilter").dxSelectBox({
+    items: forecastLevels,
+    value: forecastLevels[0],
+    onValueChanged(data) {
+      handleFilter();
+    },
+  }).dxSelectBox("instance");
+
+  let customerGrpFilter = $("#customerGrpFilter")
+    .dxSelectBox({
+      items: customerGroups,
+      value: customerGroups[0],
+      onValueChanged(data) {
+        handleFilter();
+      },
+    }).dxSelectBox("instance");
+
+  // Grid code
+  getData();
+
+  var subjects = {
+    Override: "USER_OVERRIDE",
+    Forecasted: "FORECASTED",
+    FinalForecast: "FINALFORECAST",
+  };
+
+  function setStatus(status) {
+    console.log('status', status);
+    $("#lastForecastDate").text(status.RUN_FORECAST_UPDATE_DTTM);
+    $("#lastSaveDate").text(status.SAVE_OVERRIDE_UPDATE_DTTM);
+    if (status.OVERRIDE_UPDATE_IN_SAP_DTTM) {
+      $("#lastUpdateDate").text(status.OVERRIDE_UPDATE_IN_SAP_DTTM);
+      let updateStatusText = status?.TYPE == 'E' ? 'Failed to update on' : 'Updated on';
+      $("#update-status").text(updateStatusText);
+    }
+
+  }
+
+  function handleResp(resp,  {isRunForecast}) {
+    if (resp?.data) {
+      response = resp;
+      let list = resp?.data;
+      let status = resp?.status?.[0] || {};
+
+      if (resp.hasOwnProperty("SAP UPDATE")) {
+        status.TYPE = resp?.["SAP UPDATE"][0]?.TYPE
+      }
+      setStatus(status);
+
+      list = formatList(list);
+      if(!isRunForecast)
+      addMissingCols(list);
+
+      overrideGrid.option("dataSource", list);
+      handleFilter();
+    }
+  }
+  async function getData() {
+    try {
+      let url = forecastListBaseUrl;
+      let resp = await sendRequest(`${url}`, "GET");
+      handleResp(resp, {});
+    } catch (err) {
+      console.log("error in handleFilter api", err);
+      $(".overlay").hide();
+
+      isTesting && handleResp(response, {}); // testing
+    }
+  }
+  async function handleFilter() {
+    let params = {
+      Region: regionTabs.option("selectedItem")?.text,
+      Product: productFilter.option("selectedItem"),
+      Domestic_Customr_Group: customerGrpFilter.option("selectedItem"),
+    };
+
+    overrideGrid.filter(function (itemData) {
+      let {
+        REGION,
+        FORECAST_LEVEL,
+        PRODUCT,
+        DOMESTIC_CUSTOMER_GROUP,
+        CUSTOMER_ID,
+        SUBJECT,
+      } = itemData || {};
+
+      let finder =
+        REGION == params.Region &&
+        PRODUCT == params.Product &&
+        (DOMESTIC_CUSTOMER_GROUP == params.Domestic_Customr_Group || params.Domestic_Customr_Group == "ALL");
+      return finder;
+    });
+  }
+
+  var days = [];
+
+  const avgColumn = {
+    caption: `Average Demand`,
+    allowSorting:false,
+    cssClass: "cell-disabled",
+    minWidth: 116,
+    calculateCellValue: function (rowData) {
+      if (rowData?.SUBJECT == subjects?.Override) {
+        return null;
+      }
+      let average = calcAvg(rowData)
+
+      return average ;
+    },
+  };
+  function addMissingCols(list) {
+    if (list[0]) {
+      let summaryItems2 = []
+      for (let key in list[0]) {
+        if (key?.includes("DAY_")) {
+          let newObj = {
+            caption: key.split("_")[1],
+            dataField: key,
+            allowSorting:false,
+            minWidth: 30,
+          };
+          summaryObj = {
+            name: key,
+            alignment: "center"  ,
+            showInColumn: key,
+            displayFormat: '{0}',
+            summaryType: 'custom',
+          },
+          days.push(newObj);
+          summaryItems2.push(summaryObj);
+        }
+      }
+
+      let cols = overrideGrid.option("columns");
+      overrideGrid.option("columns", [...cols, ...days, avgColumn]);
+
+      // handle daily final forecast values
+      let summaryItems = overrideGrid.option("summary.totalItems");
+
+      overrideGrid.option("summary.totalItems", [...summaryItems, ...summaryItems2]);
+    }
+  }
+  function formatList(list) {
+    let overrideList = list?.filter((obj) => obj?.SUBJECT == subjects.Override)
+    let finalForecastList = list?.filter((obj) =>
+      obj?.SUBJECT == subjects.Forecasted &&
+      obj?.FORECAST_LEVEL == forecastLevels[0])?.map((obj) => {
+        let newObj = { ...obj, SUBJECT: subjects.FinalForecast };
+
+        for (let key in newObj) {
+          if (key?.includes("DAY_")) {
+            const overrideItem = overrideList?.find(
+              (finder) => {
+
+                let isOverrideValue = finder?.PRODUCT == obj?.PRODUCT &&
+                  finder?.DOMESTIC_CUSTOMER_GROUP == obj?.DOMESTIC_CUSTOMER_GROUP &&
+                  finder?.CUSTOMER_ID == obj?.CUSTOMER_ID &&
+                  finder?.REGION == obj?.REGION;
+
+                return isOverrideValue
+              }
+            )
+            newObj[key] = overrideItem?.[key] ?? newObj[key];
+          }
+        }
+        return newObj;
+      });
+    list = list?.concat(finalForecastList);
+
+    // Sort the list by CUSTOMER_NAME
+    list = list?.sort((a, b) =>
+      a?.CUSTOMER_NAME.localeCompare(b?.CUSTOMER_NAME)
+    );
+
+    return list;
+  }
+  let currentDay = new Date().getDate();
+
+  let overrideChanged = false;
+  function toggleOverrideChangesStatus({ isChanged }) {
+    overrideChanged = isChanged;
+    let btns = actionBtns.option('items[3]')
+    actionBtns.option('items[3].disabled',  isChanged);
+    console.log(actionBtns.option('selectedItems'))
+
+  }
+    //kamlessx
+  var editCells = [];
+  var grid;
+  var overrideGrid = $("#gridContainer")
+    .dxDataGrid({
+      keyExpr: [
+        "CUSTOMER_ID",
+        "SUBJECT",
+        "FORECAST_LEVEL",
+        "DOMESTIC_CUSTOMER_GROUP",
+        "REGION",
+        "PRODUCT",
+      ],
+      showBorders: true,
+      // dataSource: (response?.data),
+      columnAutoWidth: true,
+      editing: {
+        mode: "cell",
+        allowUpdating: function (e) {
+          const subject = e.row.data.SUBJECT;
+          return subject === subjects.Override;
+        },
+      },
+      paging: { enabled: false },
+      onCellPrepared: function (e) {
+        if (e.rowType === "data") {
+          let { dataField, name, caption } = e.column || {};
+          if (
+            dataField?.includes("DAY_") &&
+            (e?.row?.data.SUBJECT == subjects.Forecasted ||
+              e?.row?.data.SUBJECT == subjects.FinalForecast ||
+              (+caption < currentDay && !isPlanningMonth))
+          ) {
+            // e.cellElement.addClass("cell-disabled");
+            e.cellElement.css({ backgroundColor: "#fff" });
+          } else if (
+            dataField?.includes("DAY_") &&
+            e?.row?.data.SUBJECT == subjects.Override
+          ) {
+            e.cellElement.css({ backgroundColor: "#fff2cc" });
+          }
+          if (
+            dataField?.includes("DAY_") &&
+            e?.row?.data.SUBJECT == subjects.FinalForecast
+          ) {
+            e.cellElement.css({ backgroundColor: "#c6f0ff" });
+          }
+          if (e.column.caption?.includes("Average Demand")) {
+            e.cellElement.addClass("text-center");
+          }
+        }
+        // kamlessx
+        if (e.rowType === "data" && $.inArray(e.rowIndex + ":" + e.columnIndex, editCells) > 0) {
+          e.cellElement.css("background-color", "lightblue");
+        }
+      },
+      //kamlessx
+      onCellClick: function (e) {
+
+        if (e.event.ctrlKey) {
+
+          // vilas_1: prevent ctrl click for these conditions
+          let isOldDay = +e.column.caption < currentDay && !isPlanningMonth ;
+          let isOverrideRow = e.key.SUBJECT == subjects.Override ;
+          let isDayCol = e.column.dataField?.includes('DAY_') ;
+          if( !isOverrideRow || !isDayCol || isOldDay )
+          return;
+
+          editCells.push(e.rowIndex + ":" + e.columnIndex);
+        }
+        else if (editCells.length) {
+          editCells = [];
+          e.component.repaint();
+        }
+      },
+
+      onEditorPreparing(e) {
+        grid = e.component;
+        let {  row, caption,  } = e;
+        if (row?.data?.SUBJECT == subjects.Override && !isPlanningMonth) {
+          e.cancel = +caption < currentDay 
+        }
+
+        // kamlessx
+        if (e.parentType === "dataRow") {
+          var oldOnValueChanged = e.editorOptions.onValueChanged;
+          e.editorOptions.onValueChanged = function (e) {
+            oldOnValueChanged.apply(this, arguments);
+            for (var i = 0; i < editCells.length; i++) {
+              var rowIndex = Number(editCells[i].split(":")[0]);
+              var columnIndex = Number(editCells[i].split(":")[1]);
+              overrideGrid.cellValue(rowIndex, columnIndex, e.value);
+              //vilas_1 update final forecast values
+              let finalValue = e.value;
+              //vilas_2 update final forecast values as per normal
+              if(!finalValue && finalValue !== 0 ) {
+                finalValue = overrideGrid.cellValue(
+                  rowIndex - 3,
+                  columnIndex
+                );
+              }
+              overrideGrid.cellValue(rowIndex + 1, columnIndex, finalValue);
+            }
+
+            overrideGrid.saveEditData();
+          }
+        }
+      },
+      onEditorPrepared(e) {
+        let { component, row, caption, disabled, element } = e;
+        // prevent mouse scroll on cell
+        if (e.parentType === 'dataRow') {
+          let targetEle = $(e.editorElement).find("input")[1];
+          $(targetEle).on('wheel', (ev) => {
+            ev.preventDefault();
+            ev.currentTarget.blur();
+          })
+        }
+      },
+      onRowUpdated(e) {
+        if (e.key.SUBJECT === subjects.Override) {
+          toggleOverrideChangesStatus({ isChanged: true });
+          const editColumnName = e.component.option("editing.editColumnName");
+          // let list = overrideGrid.option("dataSource");
+
+          const finalForecastKey = {
+            ...e.key,
+            FORECAST_LEVEL: forecastLevels[0],
+            SUBJECT: subjects.FinalForecast,
+          };
+          const finalForecastRowIndex =
+            e.component.getRowIndexByKey(finalForecastKey);
+          const forecastedKey = {
+            ...finalForecastKey,
+            SUBJECT: subjects.Forecasted,
+          };
+          const forecastedRowIndex =
+            e.component.getRowIndexByKey(forecastedKey);
+
+
+          let finalValue = e.data[editColumnName];
+          if(!finalValue && finalValue !== 0 ) {
+            finalValue = e.component.cellValue(
+              forecastedRowIndex,
+              editColumnName
+            );
+          }
+          e.component.cellValue(
+            finalForecastRowIndex,
+            editColumnName,
+            finalValue
+          );
+          e.component.saveEditData();
+        }
+      },
+
+      scrolling: {
+        useNative: false,
+        scrollByContent: true,
+        scrollByThumb: true,
+        showScrollbar: "onHover" // or "onScroll" | "always" | "never"
+      },
+      // repaintChangesOnly: true,
+      columns: [
+        {
+          fixed: true,
+          dataField: "CUSTOMER_NAME",
+          cellTemplate: function (container, options) {
+            var rowIndex = options.rowIndex;
+            var currentCustomer = options.data.CUSTOMER_NAME;
+            var previousRowData =
+              options.component.getVisibleRows()[rowIndex - 1]?.data;
+            var isFirst = previousRowData
+              ? previousRowData.CUSTOMER_NAME !== currentCustomer
+              : true;
+
+            var rowspan = 1;
+            if (isFirst) {
+              for (
+                var i = rowIndex + 1;
+                i < options.component.getVisibleRows().length;
+                i++
+              ) {
+                var nextRowData = options.component.getVisibleRows()[i].data;
+                if (nextRowData.CUSTOMER_NAME === currentCustomer) {
+                  rowspan++;
+                } else {
+                  break;
+                }
+              }
+            }
+
+            container.attr("style", "text-align: center");
+            container.text(options.data.CUSTOMER_NAME);
+
+            if (isFirst) {
+              container.attr("rowspan", rowspan);
+              container.attr(
+                "style",
+                "text-align: center; vertical-align: middle;"
+              );
+            } else {
+              container.attr("style", "display: none;");
+            }
+          },
+        },
+        {
+          caption: "DATE",
+          allowSorting:false,
+          fixed: true,
+          calculateCellValue: function (data) {
+            var label = toTitleCase(data.SUBJECT);
+            let lvl = data.FORECAST_LEVEL == 'NORMAL' ? 'Normal' : data.FORECAST_LEVEL;
+            if (data.SUBJECT === subjects.Forecasted) {
+
+              return label + " (" + lvl + ")";
+            } else {
+              return data.SUBJECT == subjects.Override ? 'User Override' : 'Final Forecast'
+            }
+          },
+        },
+      ],
+
+      summary: {
+        totalItems: [
+          {
+          name: 'Average_Demand',
+          alignment: "center"  ,
+          showInColumn: 'Average Demand',
+          displayFormat: '{0}',
+          summaryType: 'custom',
+        },
+
+        ],
+        calculateCustomSummary(options) {
+          if (options.name === 'Average_Demand') {
+            if (options.summaryProcess === 'start') {
+              options.totalValue = 0;
+            }
+            if (options.summaryProcess === 'calculate' && options?.value?.SUBJECT == subjects.FinalForecast) {
+              let average = calcAvg(options?.value)
+              options.totalValue += +average
+            }
+            if (options.summaryProcess === 'finalize' ) {
+              options.totalValue = options.totalValue?.toFixed(2)
+            }
+          }
+          // Dayly final forecast
+          if (options.name.includes("DAY_")) {
+            if (options.summaryProcess === 'start') {
+              options.totalValue = 0;
+            }
+            if (options.summaryProcess === 'calculate' && options?.value?.SUBJECT == subjects.FinalForecast) {
+              options.totalValue += +options?.value[options?.name]
+            }
+            if (options.summaryProcess === 'finalize' ) {
+              options.totalValue = options.totalValue?.toFixed(2)
+            }
+          }
+        },
+      },
+    })
+    .dxDataGrid("instance");
+
+    //kamlessx
+  $("html").on("dxclick", function (event) {
+    if (!event.ctrlKey) {
+      grid.saveEditData();
+      editCells = [];
+    }
+  })
+
+    function calcAvg(rowData) {
+      let avg = 0;
+        let count = 0;
+        for (let key in rowData) {
+          if (key?.includes("DAY_") && rowData[key]) {
+            avg += rowData[key];
+            count += 1;
+          }
+        }
+        let average = avg / count;
+        return average ? average?.toFixed(2) : 0
+    }
+
+  $("#clear-override").click(() => clearOverride());
+  $("#save-override").click(() => saveOverride());
+  $("#update-sap").click(() => updateSAP());
+  $("#run-forecast-btn").click(() => runForecast());
+
+  function clearOverride() {
+    let newData = overrideGrid.option("dataSource");
+    newData = newData?.map((obj) => {
+      let newObj = { ...obj };
+      let forecastValue = 0;
+
+      if (newObj?.SUBJECT === subjects.FinalForecast)
+        forecastValue = newData?.find(
+          (finder) =>
+            finder?.CUSTOMER_ID == obj?.CUSTOMER_ID &&
+            finder?.PRODUCT == obj?.PRODUCT &&
+            finder?.DOMESTIC_CUSTOMER_GROUP == obj?.DOMESTIC_CUSTOMER_GROUP &&
+            finder?.REGION == obj?.REGION &&
+            finder?.SUBJECT == subjects.Forecasted
+        );
+
+      // if (newObj?.SUBJECT === subjects.Override) {
+      for (let key in newObj) {
+        if (key?.includes("DAY_")) {
+          newObj[key] =
+            newObj?.SUBJECT === subjects.Override
+              ? null
+              : newObj?.SUBJECT === subjects.FinalForecast
+                ? forecastValue[key]
+                : newObj[key];
+        }
+      }
+      toggleOverrideChangesStatus({ isChanged: true });
+      return newObj;
+    });
+    overrideGrid.option("dataSource", newData);
+    // dataGrid.option('dataSource', InitialData);
+  }
+  async function saveOverride() {
+    try {
+      let forecastLevel = forecastLevels[0];
+      let data = overrideGrid.option("dataSource");
+
+      // final forecast keep only active forecast level dropdown value
+      data = data?.filter((obj) => {
+        return obj?.SUBJECT == subjects.FinalForecast &&
+          obj?.FORECAST_LEVEL !== forecastLevel
+          ? false
+          : true;
+      });
+      let FORECAST_LEVEL = forecastLevels[0];
+      let status = [{ FORECAST_LEVEL }];
+      if (response?.status?.[0]) {
+        status = [{ ...response.status[0], FORECAST_LEVEL }];
+      }
+      var finalJson = JSON.stringify({ data, status });
+      let resp = await sendRequest(
+        saveOverrideUrl,
+        (method = "POST"),
+        finalJson
+      );
+      showToast('success', 'Data saved successfully')
+      let newStatus = resp?.status?.[0] || {};
+
+      if (resp.hasOwnProperty("SAP UPDATE")) {
+        newStatus.TYPE = resp?.["SAP UPDATE"][0].TYPE
+      }
+      setStatus(newStatus);
+
+      toggleOverrideChangesStatus({ isChanged: false });
+    } catch (error) {
+      console.log("saveOverride error", error);
+    }
+  }
+  async function updateSAP() {
+    try {
+      let forecastLevel = forecastLevels[0];
+      let data = overrideGrid.option("dataSource");
+
+      // final forecast keep only active forecast level dropdown value
+      data = data?.filter((obj) => {
+        return obj?.SUBJECT == subjects.FinalForecast &&
+          obj?.FORECAST_LEVEL !== forecastLevel
+          ? false
+          : true;
+      });
+      let FORECAST_LEVEL = forecastLevels[0];
+      let status = [{ FORECAST_LEVEL }];
+      if (response?.status?.[0]) {
+        status = [{ ...response.status[0], FORECAST_LEVEL }];
+      }
+      var finalJson = JSON.stringify({ data, status });
+      let resp = await sendRequest(updateSapUrl, (method = "POST"), finalJson);
+      let newStatus = resp?.status?.[0] || {};
+      if (resp.hasOwnProperty("SAP UPDATE")) {
+        newStatus.TYPE = resp?.["SAP UPDATE"][0].TYPE
+      }
+      setStatus(newStatus);
+    } catch (error) {
+      console.log("updateSAP error", error);
+    }
+  }
+  async function runForecast() {
+    try {
+      let resp = await sendRequest(runForecastUrl, (method = "GET"), "");
+      handleResp(resp, {isRunForecast:true});
+      toggleOverrideChangesStatus({ isChanged: true });
+    } catch (error) {
+      isTesting &&
+      handleResp(response,  {isRunForecast:true});
+    }
+  }
+
+  async function sendRequest(url, method, data) {
+    const d = $.Deferred();
+
+    if (data === undefined) {
+      data = "";
+    }
+    var myToken = await sasgetCSRFToken();
+
+    $.ajax(url, {
+      method,
+      data,
+      // xhrFields: { withCredentials: false },
+      contentType: "application/json",
+      cache: false,
+      beforeSend: function (xhr) {
+        xhr.setRequestHeader("X-CSRF-Token", myToken);
+        xhr.setRequestHeader("X-CSRF-Header", "X-CSRF-Token");
+        $(".overlay").show();
+      },
+      complete: (xhr, status) => {
+        $(".overlay").hide();
+      },
+    }).done((result) => {
+        d.resolve(method === "POST" ? result : result);
+      })
+      .fail((xhr) => {
+        d.reject(xhr.responseJSON ? xhr.responseJSON.Message : xhr.statusText);
+      });
+    return d.promise();
+  }
+
+  async function sasgetCSRFToken() {
+    const csrfURL = `${baseurl}/csrf`;
+    const csrfParameters = { method: "GET", credentials: "include" };
+    const csrfRequest = await fetch(csrfURL, csrfParameters);
+    const csrfToken = csrfRequest.headers.get("X-CSRF-TOKEN");
+    return csrfToken;
+  };
+
+});
+function toTitleCase(str) {
+  return str ? str?.toLowerCase()?.split(' ')?.map(function (word) {
+    return (word?.charAt(0)?.toUpperCase() + word?.slice(1));
+  }).join(' ') : '';
+}

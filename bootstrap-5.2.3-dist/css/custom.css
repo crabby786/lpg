@@ -1,0 +1,170 @@
+/*!
+ * FullCalendar v1.0.1 Stylesheet
+ * Docs & License: http://aramco.com
+ * (c) 2023 Aramco Author : Rajnikanth BS
+ */
+ :root {
+   --primary:#00a3e0;
+   --primary-dark:#007aa8;
+   --grey1:#ececec;
+
+ }
+
+@media (min-width: 1024px) {
+  .media-container {
+    width: calc(1200vh - 110px);
+    overflow-x: scroll;
+  }
+}
+
+body {
+  font-family: "ManifaPro2-Regular";
+  src: url(../../font/Manifa_Pro_2.224/Font/Var/ManifaPro2_2.224\ Variable.ttf) format("truetype");
+  font-family: "ManifaPro2-Regular";
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  background-color: #fff
+
+}
+
+table tr th {
+  font-size: 12px;
+}
+
+table tr td {
+  font-size: 10.5px;
+}
+
+button {
+  background-color: #00A3E0 !important;
+}
+
+/* Main header : first */
+.firstHeaderBar {
+  background-color: #00A3E0;
+  font-family: "ManifaPro2-Regular";
+  border-bottom: 5px solid #007AA8 !important;
+}
+
+/* Main header : second */
+.secondHeaderBar {
+  background-color: #ECECEC !important;
+}
+
+/*creating new row*/
+.addRow {
+  background-color: #00A3E0 !important;
+  color: white;
+}
+
+
+/* second header */
+div.extended-header {
+  padding: 5px;
+  background-color: #E2F4F4;
+  border-bottom: 0.5px solid #00A19A;
+  margin: 0;
+}
+
+/* table warning colour */
+td.table-warning {
+  border: 1px solid #FFE490;
+}
+
+/* custom buttons */
+.btn-group.btn-custom {
+  margin: 0 auto;
+  padding: 0;
+  width: auto;
+}
+
+button.btn.btn-primary {
+  margin-left: 2rem;
+  /* background-color: #00A3E0; */
+}
+
+/* second header input */
+.top-input {
+  width: 30%;
+  margin: 0 auto;
+
+}
+
+.footer-button {
+  background-color: #FFE399;
+  border: 1px solid #FFE490;
+  color: #000;
+}
+
+/* Custom table styles for hover and aligns */
+.table-hover tbody tr:hover td,
+.table-hover tbody tr:hover th {
+  background-color: #CCEDF9;
+  z-index: 2;
+}
+
+#monthlyPlan td {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.table-scrollable {
+  overflow-x: auto;
+  max-width: 1024px;
+  box-shadow: inset 0 0 5px rgba(150, 150, 150, 0.35);
+  margin: auto;
+}
+
+.close {
+  border: 1px solid #ffffff;
+}
+
+#calendar {
+  width: 900px;
+  /* max-width: 800px; */
+  margin: 20px auto;
+}
+
+/* Calendar */
+/* Stylesheet*/
+#calendar td {
+  /* border: 1px solid #000; */
+  vertical-align: middle !important;
+  position: inherit !important;
+}
+.fc th.fc-day-header {
+  padding:10px;
+  background-color: var(--primary) ;
+  color: #fff;
+  font-size: 1rem;
+}
+.fc td.fc-day-top .fc-day-number {
+  font-size:2em;
+}
+
+.form-check-input {
+  margin: auto;
+  /*setting margin to auto of the cheeckbox*/
+  display: flexbox;
+  /*Flex box property*/
+}
+
+.overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  top: 50%;
+  left: 0px;
+  opacity: 0.5;
+  filter: alpha(opacity=50);
+}
+
+.spinner-grow {
+  width: 3rem;
+  height: 3rem;
+  z-index: 20;
+}

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>LPG</title>
+    <link rel="stylesheet" href="./bootstrap-5.2.3-dist/css/bootstrap.css">
+    <script src="./bootstrap-5.2.3-dist/js/bootstrap.js"></script>
+    <link rel="stylesheet" href="./bootstrap-5.2.3-dist/css/custom.css">
+    <link rel="stylesheet" href="./bootstrap-5.2.3-dist/css/datepicker.css">
+
+    <script src="./bootstrap-5.2.3-dist/js/jquery.js"></script>
+    <script src="./bootstrap-5.2.3-dist/js/bootstrap-datepicker.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+    <style>
+        table tr th {
+            font-size: 12px;
+        }
+
+        table tr td {
+            font-size: 10.5px;
+        }
+
+        .overlay {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            top: 50%;
+            left: 0px;
+            opacity: 0.5;
+            filter: alpha(opacity=50);
+        }
+
+        .spinner-grow {
+            width: 3rem;
+            height: 3rem;
+            z-index: 20;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="overlay">
+        <div class="d-flex justify-content-center">
+            <div class="spinner-grow text-primary" role="status">
+                <!-- <span class="sr-only text-white" style="margin-top: 10px;">Loading...</span> -->
+            </div>
+        </div>
+    </div>
+    <header class="py-3 firstHeaderBar">
+        <div class="container d-flex flex-wrap justify-content-center">
+            <a href="#" class="d-flex align-items-center mb-3 mb-lg-0 me-lg-auto text-white text-decoration-none">
+                <span class="fs-4">Enter Customer Annual Plan</span>
+            </a>
+        </div>
+    </header>
+    <nav class="py-2 bg-light secondHeaderBar">
+        <div class="container">
+            <form>
+                <div class="row d-flex align-items-center">
+                    <div class="col-8" id="datepicker1">
+                    </div>
+                    <div class="col-4 float-end">
+                        <div class="container-fluid d-flex justify-content-end">
+                            <button type="button" id="addRow" class="btn px-3 btn-sm text-right text-white ms-3 rounded-0 addRow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                  class="bi bi-file-earmark-plus" viewBox="0 0 16 16" style="margin-bottom:5px;">
+                                  <path
+                                    d="M8 6.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V11a.5.5 0 0 1-1 0V9.5H6a.5.5 0 0 1 0-1h1.5V7a.5.5 0 0 1 .5-.5z" />
+                                  <path
+                                    d="M12 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5h-2z" />
+                                </svg>
+                                Add</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-5">
+        <div class="row">
+            <div class="tbl_user_data table-scrollable"></div>
+            <div class="post_msg"></div>
+        </div>
+    </div>
+    <!-- start: Delete Coupon Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog rounded-0">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" id="btnDelteClose" class="close" data-dismiss="modal"
+                        aria-hidden="true">&times;</button>
+                    <p class="modal-title" id="myModalLabel">Warning!</p>
+                </div>
+                <div class="modal-body">
+                    <p> Are you sure you want to DELETE?</p>
+                </div>
+                <!--/modal-body-collapse -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger rounded-0" id="btnDelteYes" href="#">Yes</button>
+                    <button type="button" class="btn btn-default rounded-0" id="btnDelteNo"
+                        data-dismiss="modal">No</button>
+                </div>
+                <!--/modal-footer-collapse -->
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!-- /.modal -->
+    <script src="./bootstrap-5.2.3-dist/js/custom.js"></script>
+    <script src="./bootstrap-5.2.3-dist/js/common.functions.js"></script>
+    <script src="./bootstrap-5.2.3-dist/js/custom.annual.js"></script>
+    <script type="text/javascript">
+
+        var selectData = { "terminals": [{ "id": "1", "terminalName": "RT" }, { "id": "2", "terminalName": "YNT" }], "customers": [{ "id": "1", "customerName": "AAA" }, { "id": "2", "customerName": "BBB" }, { "id": "3", "customerName": "CCC" }, { "id": "4", "customerName": "DDD" }] };
+
+        readDataAnnualPlan();
+        addRow();
+        editRow(); 
+        updateData();
+        insertData(); 
+        deleteRowData();
+        
+        //--->make div editable > start
+        // $(document).on('click', '.row_data', function (event) {
+        //     event.preventDefault();
+
+        //     if ($(this).attr('edit_type') == 'button') {
+        //         return false;
+        //     }
+
+        //     //make div editable
+        //     $(this).closest('div').attr('contenteditable', 'true');
+        //     //add bg css
+        //     $(this).addClass('bg-warning').css('padding', '5px');
+
+        //     $(this).focus();
+        // })
+        // //--->make div editable > end
+
+
+        // //--->save single field data > start
+        // $(document).on('focusout', '.row_data', function (event) {
+        //     event.preventDefault();
+
+        //     if ($(this).attr('edit_type') == 'button') {
+        //         return false;
+        //     }
+
+        //     var row_id = $(this).closest('tr').attr('row_id');
+
+        //     var row_div = $(this)
+        //         .removeClass('bg-warning') //add bg css
+        //         .css('padding', '')
+
+        //     var col_name = row_div.attr('col_name');
+        //     var col_val = row_div.html();
+
+        //     var arr = {};
+        //     arr[col_name] = col_val;
+
+        //     //use the "arr"	object for your ajax call
+        //     $.extend(arr, { row_id: row_id });
+
+        //     //out put to show
+        //     $('.post_msg').html('<pre class="bg-light">' + JSON.stringify(arr, null, 2) + '</pre>');
+
+        // });
+
+        // //--->save whole row entery > start	
+        
+
+
+    </script>
+
+</body>
+
+</html>

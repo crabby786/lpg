@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>LPG</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link rel="stylesheet" href="./bootstrap-5.2.3-dist/css/bootstrap.css">
+
+  <link rel="stylesheet" href="./bootstrap-5.2.3-dist/css/custom.css">
+  <link rel="stylesheet" href="./bootstrap-5.2.3-dist/css/datepicker.css">
+  <!-- <link rel="stylesheet" href="./bootstrap-5.2.3-dist/css/fullcalendar.css"> -->
+  
+  <!-- <script src="./bootstrap-5.2.3-dist/js/jquery.js"></script> -->
+  <script src="./bootstrap-5.2.3-dist/js/jquery-3.6.3.min.js"></script>
+  <script src="./bootstrap-5.2.3-dist/js/bootstrap.js"></script>
+  <script src="./bootstrap-5.2.3-dist/js/bootstrap-datepicker.js"></script>
+  <!-- <script src="./bootstrap-5.2.3-dist/js/fullcalendar.min.js"></script> -->
+  <link href="./bootstrap-5.2.3-dist/css/fullcalendar.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="./lib/css/styles.css">
+  <script src="./bootstrap-5.2.3-dist/js/moment.min.js"></script>
+  <script src="./bootstrap-5.2.3-dist/js/fullcalendar.min.js"></script>
+  <script src="./bootstrap-5.2.3-dist/js/Chart.min.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+
+  <script type="text/javascript" src="./bootstrap-5.2.3-dist/util/contentUtil.js"></script>
+  <script type="text/javascript" src="./bootstrap-5.2.3-dist/util/messagingUtil.js"></script>
+  <script type="text/javascript" src="./bootstrap-5.2.3-dist/util/jobUtil.js"></script>
+
+  <style>
+    #calendar td {
+      vertical-align: middle !important;
+
+    }
+
+    .fc,
+    span.fc-day-number {
+      text-align: center !important;
+    }
+
+    .fc td,
+    span.fc-day-number {
+      padding: 0;
+      vertical-align: middle !important;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div class="overlay">
+    <div class="d-flex justify-content-center">
+      <div class="spinner-grow text-primary" role="status">
+        <!-- <span class="sr-only text-white" style="margin-top: 10px;">Loading...</span> -->
+      </div>
+    </div>
+  </div>
+
+  <section class="container-fluid" style="position: fixed; z-index: 9999;"><a href="#" class="btn-sm btn-sm-transparent text-white" style="text-decoration: none;">&lt;&lt;Back To Home</a></section>
+ 
+  <header class="py-3 border-bottom firstHeaderBar">
+    <div class="container d-flex flex-wrap pt-5 justify-content-start">
+      <a href="/" class="d-flex align-items-center mb-3 mb-lg-0 me-lg-auto text-dark text-decoration-none">
+        <span class="fs-4 text-white">Mark Available Slots in West Terminal (OSPAS)</span>
+      </a>
+      <!-- <img src="./img/calendar-event.svg" alt="calendar-event" class = "top-calendar-icon" /> -->
+      <span class="col-12 col-lg-auto mb-3 mb-lg-0 text-white justify-content-end" id="datepicker1">
+        
+      </span>
+    </div>
+  </header>
+  
+  <nav class="py-2 m-0 bg-light secondHeaderBar">
+    <div class="container">
+      <div class="gap-1 d-md-block">
+        <button class="btn px-3 btn-sm text-white rounded-0" type="button">Save</button>
+      </div>
+    </div>
+  </nav>
+  <div>
+    <div class="toast" id="myToast" style="position: fixed; z-index: 9999; width:20%;">
+      <div class="toast-header">
+        <strong class="me-auto"><i class="bi-gift-fill"></i> </strong>
+        <small></small>
+        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+      </div>
+      <div class="toast-body">
+
+      </div>
+    </div>
+  </div>
+  <div class="container pb-5 ">
+    <div class="row">
+      <div class="col">
+        
+        <h5 class="text-center mt-4" id="calendar-title" >
+          
+        </h5>
+        <div id="calendar"></div>
+      </div>
+    </div>
+
+    <div class="row">&nbsp;</div>
+    <div class="row">&nbsp;</div>
+
+    <div class="row">
+      <div class="col" style="overflow-x: auto;" >
+        <h5 class="text-center" >West Terminal Avails</h5>
+        <div class="chart-container" style="position: relative; height:auto; width:860px;margin:auto">
+          <canvas id="myChart"></canvas>
+      </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="./bootstrap-5.2.3-dist/js/custom.js"></script>
+
+
+  <script type="text/javascript">
+    var url = 'https://sasserver.demo.sas.com';
+
+    $(document).ready(function () {
+      let today = new Date().toLocaleDateString()
+      var year = moment().format('YYYY');
+      var futureMonthName = moment().add(1, "month").format('MMMM');
+      var planningMonth =  futureMonthName + ' ' + year;
+
+      $("#datepicker1").html( "Planning Month - " + planningMonth)
+      $("#calendar-title").html( "Planning Month - " + planningMonth)
+
+      var selectedDays = [];
+      var selectedDate = [];
+
+      var readUrl = 'https://sasserver.demo.sas.com/SASJobExecution/?_program=%2FLPG%2FAPI_Terminal_Slot_01&myjson=%7B"id":"1"%7D';
+      // ajax function get results
+
+      $.ajax({
+        url: readUrl,
+        dataType: "json",
+        beforeSend: function (xhr) {
+          xhr.setRequestHeader('X-CSRF-TOKEN', 'Bearer sas_services');
+          $('.overlay').show();
+        },
+        data: {},
+        success: function (data) {
+          $('.overlay').hide();
+          var selectedDays = [];
+          console.log("data", data);
+         
+          $.each(data, function (i, obj) {
+            selectedDays.push({
+              planning_month: obj.PLANNING_MONTH,
+              terminal_cd: obj.TERMINSL_CD,
+              terminal_nm: obj.TERMINSL_NM,
+              day: obj.DAY,
+              available_flag: obj.AVAILABLE_FLG,
+              modified_dttm: obj.MODIFIED_DTTM,
+              modified_by: obj.MODIFIED_BY
+            });
+          });
+          initializeFullCalendar(selectedDays);
+        }
+      });
+    });
+
+    //Start function to insitalize calendar 
+    function initializeFullCalendar(selectedDays) {
+      console.log(selectedDays);
+      $('table').addClass('.table');
+      var cal = $('#calendar');
+      var calendarOptions = {
+        header: false,
+        // aspectRatio:3,
+        contentHeight:400,
+        defaultDate: moment().add(1, "months"),
+        defaultView: 'month',
+        showNonCurrentDates: false,
+        dayRender: function (date, cell) {
+          console.log(date);
+          var theDate = date.format('YYYY-MM-DD');
+          // Check if the current date matches any date in the JSON data
+          var selectedDate = selectedDays.find(function (day) {
+            console.log(day.day +"==="+theDate);
+            return day.day === theDate;
+          });
+          
+          // If a match is found, set the checkbox as checked
+          if (selectedDate && selectedDate.available_flag === 'Y') {
+            cell.append('<input id="' + selectedDate + '" data-flag="' + selectedDate.available_flag + '" type="checkbox" class="checkbox fc-checkbox-day" checked/>');
+          } else {
+            var date_n = cell.closest('td').attr('data-date');
+            if(date_n === undefined){
+              cell.append('<input id="' + date_n + '" data-flag="N" type="checkbox" class="checkbox fc-checkbox-day" disabled/>');
+            } else {
+              cell.append('<input id="' + date_n + '" data-flag="N" type="checkbox" class="checkbox fc-checkbox-day"/>');
+            }
+            
+          }
+         
+        }
+      }
+      cal.fullCalendar( calendarOptions);
+    }
+    //End function to insitalize calendar 
+
+    //start ----> insert data db from ajax
+    $(document).ready(function () {
+
+      $('#slotCalendar').click(function () {
+        var checkboxes = new Array();
+        var $checked = $('input[type="checkbox"]:checked.fc-checkbox-day');
+        var allData = new Array();
+        $.each($checked, function (i, ctrl) {
+          checkboxes.push($(this).closest('td').attr('data-date'));
+        });
+
+        var allData = new Array();
+        $.each(checkboxes, function (index, val) {
+          var calenMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          var dateFormatted = moment(val).format('MMMYYYY');
+
+          allData.push({
+            'PLANNING_MONTH': dateFormatted,
+            'TERMINSL_CD': "YNB TERM",
+            'TERMINSL_NM': "YANBU TERMINAL",
+            'DAY': val,
+            'AVAILABLE_FLG': "Y",
+            'MODIFIED_DTTM': moment().format('MM/DD/YYYY'),
+            'CREATED_DTTM': moment().format('MM/DD/YYYY'),
+            'MODIFIED_BY': "SAS",
+            'CREATED_BY': "UNXSAS"
+          });
+        });
+
+
+
+        csrfToken = '';
+        const so = async () => {
+          const csrfURL = `${url}/SASJobExecution/csrf`
+          const csrfParameters = { method: "GET", credentials: "include" }
+          const csrfRequest = await fetch(csrfURL, csrfParameters)
+          const csrfToken = await csrfRequest.headers.get("X-CSRF-TOKEN")
+
+          // var data = JSON.stringify([{ "id": "id" + 1, "name": "ARAMCO", "lastname": "YNB" }]);
+          var newUrl = 'https://sasserver.demo.sas.com/SASJobExecution/?_program=%2FLPG%2FAPI_Terminal_Slot_03&myjson=%7B"id":"1"%7D';
+
+          $.ajax({
+            type: "POST",
+            url: newUrl,
+            dataType: "json",
+            // data: data,
+            credentials: "include",
+            contentType: "application/json",
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader('X-CSRF-Token', csrfToken);
+              xhr.setRequestHeader('X-CSRF-Header', 'X-CSRF-Token');
+              $('.overlay').show();
+            },
+
+            data: JSON.stringify(allData),
+            success: function (data, status, xhr) {
+              $('.overlay').hide();
+              $("#myToast").toast("show");
+              $(".toast-header").addClass("bg-success text-white");
+              $(".toast-body").addClass("bg-white");
+              $(".me-auto").html("Success");
+              $(".toast-header > strong").html(data.user);
+              $(".toast-body ").html(data.Message);
+
+            },
+            error: function (data) {
+              $("#myToast").toast("show");
+              $(".toast-header").addClass("bg-danger text-white");
+              $(".toast-body").addClass("bg-white");
+              $(".me-auto").html("Warning");
+              $(".toast-header > strong").html(data.user);
+              $(".toast-body ").html(data.Message);
+            }
+          });
+
+        };
+        so().then(af => csrfToken);
+      });
+    });
+    // end ----->
+
+
+
+  </script>
+
+  <script type="text/javascript">
+    // var readUrl = 'https://sasserver.demo.sas.com/SASJobExecution/?_program=%2FLPG%2FTERM_AVAILS_CHART_READ&myjson=%7B%22id%22:%221%22%7D';
+    var readUrl = 'https://sasserver.demo.sas.com/SASJobExecution/?_program=%2FLPG%2FTERM_AVAILS_CHART_READ&myjson=%7B"id":"1"%7D';
+    // ajax function get results
+    $.ajax({
+      url: readUrl,
+      dataType: "json",
+      beforeSend: function (xhr) {
+        xhr.setRequestHeader('X-CSRF-TOKEN', 'Bearer sas_services');
+      },
+      data: {},
+      success: function (data) {
+        var keyValuesPropane = [];
+        var keyValuesButane = [];
+        var keyValuesDays = [];
+        $.each(data, function (i, obj) {
+          keyValuesPropane.push(obj.PROPANE);
+          keyValuesButane.push(obj.BUTANE);
+          const date = moment(obj.PERIOD_START_DT, 'MM-DD-YYYY').format('DD');
+          keyValuesDays.push(date);
+
+        });
+        console.log("keyValuesDays", data);
+
+        var xValues = keyValuesDays;
+
+        new Chart("myChart", {
+          type: "line",
+          responsive:true,
+          maintainAspectRatio:true,
+          data: {
+            labels: xValues,
+            datasets: [{
+              data: keyValuesPropane,
+              borderColor: "red",
+              label: "Terminal Avails Propane",
+              fill: false
+            }, {
+              data: keyValuesButane,
+              borderColor: "green",
+              label: "Terminal Avails Butane",
+              fill: false
+            },
+            ]
+          },
+          options: {
+            // legend: { display: true }
+            legend: {
+              title: {
+                display: true,
+                text: "LPG"
+              }
+            }
+          }
+        });
+      },
+      error: function (data) {
+        console.log(data);
+      }
+    });
+  </script>
+
+</body>
+
+</html>

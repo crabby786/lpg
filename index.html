@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>LPG</title>
+  <link rel="stylesheet" href="./bootstrap-5.2.3-dist/css/bootstrap.css">
+  <script src="./bootstrap-5.2.3-dist/js/bootstrap.js"></script>
+  <link rel="stylesheet" href="./bootstrap-5.2.3-dist/css/custom.css">
+  <link rel="stylesheet" href="./bootstrap-5.2.3-dist/css/datepicker.css">
+  <script src="./bootstrap-5.2.3-dist/js/jquery.js"></script>
+  <!-- <script src="https://code.jquery.com/jquery-3.6.0.js"></script> -->
+  <script src="./bootstrap-5.2.3-dist/js/bootstrap-datepicker.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+  <!-- <link href="http://cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css" rel="stylesheet" />
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script> -->
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> -->
+  <link href="http://cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.min.css" rel="stylesheet" />
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/chosen/1.1.0/chosen.jquery.min.js"></script>
+  <!-- <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet"/> -->
+
+</head>
+
+<body>
+  <header>
+    <div class="container-fluid custom-fluid-container">
+      <div class="row">
+        <div class="col text-center">
+          <h2>Enter Export Demand (COSMD)
+          </h2>
+        </div>
+      </div>
+      <div class="row g-3 top-input">
+        <div class="col-12">
+          <input type="text" data-provide="datepicker" disabled id="datepicker1" class="form-control">
+        </div>
+      </div>
+
+    </div>
+    <div class="row extended-header">
+      <div class="btn-group btn-custom">
+        <button type="button" id="addRow" class="btn btn-primary ms-3 rounded-2 addRow">Add</button>
+        <button type="button" class="btn btn-primary ms-3 rounded-2">Delete</button>
+        <button type="button" class="btn btn-primary ms-3 rounded-2">Save</button>
+        <button type="button" class="btn btn-primary ms-3 rounded-2">Create Base Scenario</button>
+      </div>
+    </div>
+  </header>
+  <div class="container mt-5">
+    <div class="row">
+      <div class="tbl_user_data"></div>
+      <div class="post_msg"></div>
+    </div>
+  </div>
+  <footer>
+    <div class="container">
+      <input type="button" class="btn btn-primary footer-button float-end" value="User Input Field">
+    </div>
+  </footer>
+  <script src="./bootstrap-5.2.3-dist/js/custom.js"></script>
+  <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css" integrity="sha512-ELV+xyi8IhEApPS/pSj66+Jiw+sOT1Mqkzlh8ExXihe4zfqbWkxPRi8wptXIO9g73FSlhmquFlUOuMSoXz5IRw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js" integrity="sha512-57oZ/vW8ANMjR/KQ6Be9v/+/h6bq9/l3f0Oc7vn6qMqyhvPd1cvKBRWWpzu0QoneImqr2SkmO4MSqU+RpHom3Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
+
+  <script type="text/javascript">
+    $('body').on('click', '#checkAll', function () {
+      // $('.check').prop('checked',true);
+      $("#checkAll").change(function () {
+        $("input:checkbox").prop('checked', $(this).prop("checked"));
+      });
+      $('.check').click(function () {
+        if ($('.check:checked').length == $('.check').length) {
+          $('#checkAll').prop('checked', true);
+        } else {
+          $('#checkAll').prop('checked', false);
+        }
+      });
+    });
+    $('body').on('click', '#addRow', function () {
+      if ($('#terminal').val() === '' || $('#customer').val() === '' || $('#date').val() === '' || $('#temp_num_key').val() === '' || $('#propane_bbl').val() === '' || $('#butane_bbl').val() === '' || $('#propane_kmt').val() === '' || $('#butane_kmt').val() === '') {
+        return false;
+      }
+      $('#dtBasicExample tr:first').after('<tr><td>&nbsp;</td><td><input type="text" class="form-control" id="terminal" name="terminal"></td><td><input type="text" class="form-control" id="customer" name="customer"></td><td><input type="number" id="date" class="form-control" name="date"></td><td><input type="number" class="form-control" id="temp_num_key" name="temp_num_key"></td><td><input type="number" class="form-control" id="propane_bbl" name="propane_bbl"></td><td><input type="number" class="form-control" id="butane_bbl" name="butane_bbl"></td><td><input type="number" class="form-control" id="propane_kmt" name="propane_kmt"></td><td><input type="number" class="form-control" id="butane_kmt" name="butane_kmt"></td><td><input type="submit" class="btn btn-primary" name="save" id="save" value="Save"></td></tr>');
+    });
+    $('body').on('click', '#save', function () {
+      var form_array = {};
+      form_array['terminal'] = $('#terminal').val();
+      form_array['customer'] = $('#customer').val();
+      form_array['date'] = $('#date').val();
+      form_array['temp_num_key'] = $('#temp_num_key').val();
+      form_array['propane_bbl'] = $('#propane_bbl').val();
+      form_array['butane_bbl'] = $('#butane_bbl').val();
+      form_array['propane_kmt'] = $('#propane_kmt').val();
+      form_array['butane_kmt'] = $('#butane_kmt').val();
+      $('.post_msg').html('<pre class="bg-light">' + JSON.stringify(form_array, null, 2) + '</pre>');
+    });
+
+    $(document).ready(function ($) {
+      //ajax row data
+      var ajax_data =
+        [
+          { "terminal": "RT", "customer": "AAA", "date": 1, "temp_num_key": 101, "propane_bbl": "136906", "butane_bbl": "136906", "propane_kmt": "11", "butane_kmt": "11" },
+          { "terminal": "YNT", "customer": "BBB", "date": 1, "temp_num_key": 102, "propane_bbl": "136906", "butane_bbl": "136906", "propane_kmt": "7", "butane_kmt": "7" },
+          { "terminal": "RT", "customer": "CCC", "date": 1, "temp_num_key": 103, "propane_bbl": "136906", "butane_bbl": "136906", "propane_kmt": "11", "butane_kmt": "11" },
+          { "terminal": "YNT", "customer": "DDD", "date": 1, "temp_num_key": 104, "propane_bbl": "136906", "butane_bbl": "136906", "propane_kmt": "7", "butane_kmt": "7" }
+        ]
+        ;
+      // console.log(ajax_data['export_demand'][0]['customer']);
+      // var final_ajax_data = JSON.parse(ajax_data);
+      // console.log(final_ajax_data);      
+      var selectData = { "terminals": [{"id": "1","terminalName": "RT"},{"id": "2","terminalName": "YNT"}],"customers": [{"id": "1","customerName": "AAA"},{"id": "2","customerName": "BBB"},{"id": "3","customerName": "CCC"},{"id": "4","customerName": "DDD"}]};    
+      var random_id = function () {
+        var id_num = Math.random().toString(9).substr(2, 3);
+        var id_str = Math.random().toString(36).substr(2);
+
+        return id_num + id_str;
+      }
+
+      //--->create data table > start
+      var tbl = '';
+      tbl += '<table id="dtBasicExample" class="table table-condensed table-bordered text-center" cellspacing="0" width="100%">'
+      //--->create table header > start
+      tbl += '<thead>';
+      tbl += '<tr class="table-light">';
+      tbl += '<th class="th-sm"> <input type="checkbox" id="checkAll" class="form-check-input checkAll">Select All</th>';
+      tbl += '<th class="th-sm">Terminal</th>';
+      tbl += '<th class="th-sm">Customer</th>';
+      tbl += '<th class="th-sm">Date</th>';
+      tbl += '<th class="th-sm">Temp Num Key</th>';
+      tbl += '<th class="th-sm">Propane BBL</th>';
+      tbl += '<th class="th-sm">Butane BBL</th>';
+      tbl += '<th class="th-sm">Propane KMT</th>';
+      tbl += '<th class="th-sm">Butane KMT</th>';
+      tbl += '<th class="th-sm">Edit</th>';
+      tbl += '</tr>';
+      tbl += '</thead>';
+      //--->create table header > end
+      //--->create table body > start
+      tbl += '<tbody>';
+      //--->create table body rows > start
+      var i = 0;
+      $.each(ajax_data, function (index, val) {
+        //you can replace with your database row id
+        // $.each(val, function (ind, va){
+        //     console.log(va['date']);
+        // })
+        // console.log(val['i'].date);
+        var row_id = random_id();
+        // console.log("value"+val);
+
+        // console.log(val);
+        // console.log(val[i].date);
+        //loop through ajax row data
+        tbl += '<tr row_id="' + row_id + '">';
+        tbl += '<td><input type="checkbox" class="form-check-input check"></td>';
+        tbl += '<td class="table-warning"><div><select id="terminalId' + i + '" class="form-select terminal_dropdown" name="terminal"><option value="">--Select--</option></select><div class="defaultValueTerminal">' + val['terminal'] + '</div></div></td>';
+        tbl += '<td class="table-warning"><div><select id="customerId' + i + '" class="form-select customer_dropdown" name="customer"><option value="">--Select--</option></select><div class="defaultValueCustomer">' + val['customer'] + '</div></div></td>';
+        tbl += '<td class="table-warning"><div class="row_data" edit_type="click" col_name="date">' + val['date'] + '</div></td>';
+        tbl += '<td class="table-warning"><div class="row_data" edit_type="click" col_name="temp_num_key">' + val['temp_num_key'] + '</div></td>';
+        tbl += '<td><div class="row_data" edit_type="click" col_name="email">' + val['propane_bbl'] + '</div></td>';
+        tbl += '<td><div class="row_data" edit_type="click" col_name="email">' + val['butane_bbl'] + '</div></td>';
+        tbl += '<td><div class="row_data" edit_type="click" col_name="email">' + val['propane_kmt'] + '</div></td>';
+        tbl += '<td><div class="row_data" edit_type="click" col_name="email">' + val['butane_kmt'] + '</div></td>';
+
+        //--->edit options > start
+        tbl += '<td>';
+
+        tbl += '<span class="btn_edit" > <a href="#" class="btn btn-link " row_id="' + row_id + '" > Edit</a> </span>';
+
+        //only show this button if edit button is clicked
+        tbl += '<span class="btn_save"> <a href="#" class="btn btn-link"  row_id="' + row_id + '"> Save</a> | </span>';
+        tbl += '<span class="btn_cancel"> <a href="#" class="btn btn-link" row_id="' + row_id + '"> Cancel</a> | </span>';
+
+        tbl += '</td>';
+        //--->edit options > end
+
+        tbl += '</tr>';
+        i++;
+      })
+
+
+
+      //--->create table body rows > end
+
+      tbl += '</tbody>';
+      //--->create table body > end
+
+      tbl += '</table>'
+      //--->create data table > end
+
+      //out put table data
+      $(document).find('.tbl_user_data').html(tbl);
+
+      $(document).find('.btn_save').hide();
+      $(document).find('.btn_cancel').hide();
+      $(document).find('.terminal_dropdown').hide();
+      $(document).find('.customer_dropdown').hide();
+
+      $(document).ready(function () {
+        var l = 0;
+        $.each(selectData.terminals, function (index, valTerminal) {
+              $('.terminal_dropdown').append('<option value=' + valTerminal.terminalName + '>' + valTerminal.terminalName + '</option>');
+          l++;
+        });
+      });
+
+      var k = 0;
+      $(document).ready(function () {
+        $.each(selectData.customers, function (index, valCustomer) {
+          $('.customer_dropdown').append('<option value=' + valCustomer.customerName + '>' + valCustomer.customerName + '</option>');
+          k++;
+        });
+      });
+
+      $(document).ready(function () {
+        var j = 0;
+        $.each(ajax_data, function (index, appendData) {
+          var terminal_value = appendData['terminal'];
+          var customer = appendData['customer'];
+          // $('.terminal_dropdown').val( $( '.terminal_dropdown option:contains("' + terminal_value + '")' ).val() );
+          $("#terminalId" + j).val(terminal_value);
+          $("#customerId" + j).val(customer);
+          j++;
+        });
+      });
+
+      //--->button > edit > start	
+      $(document).on('click', '.btn_edit', function (event) {
+        event.preventDefault();
+        var tbl_row = $(this).closest('tr');
+
+        var row_id = tbl_row.attr('row_id');
+
+        tbl_row.find('.btn_save').show();
+        tbl_row.find('.btn_cancel').show();
+        tbl_row.find('.terminal_dropdown').show();
+        tbl_row.find('.customer_dropdown').show();
+        tbl_row.find('.defaultValueTerminal').hide();
+        tbl_row.find('.defaultValueCustomer').hide();
+        //hide edit button
+        tbl_row.find('.btn_edit').hide();
+
+        //make the whole row editable
+        tbl_row.find('.row_data')
+          .attr('contenteditable', 'true')
+          .attr('edit_type', 'button')
+          .addClass('bg-warning')
+          .css('padding', '3px')
+        //--->add the original entry > start
+        tbl_row.find('.row_data').each(function (index, val) {
+          //this will help in case user decided to click on cancel button
+          $(this).attr('original_entry', $(this).html());
+        });
+        //--->add the original entry > end
+      });
+      //--->button > edit > end
+      //--->button > cancel > start	
+      $(document).on('click', '.btn_cancel', function (event) {
+        event.preventDefault();
+        var tbl_row = $(this).closest('tr');
+        var row_id = tbl_row.attr('row_id');
+        //hide save and cacel buttons
+        tbl_row.find('.btn_save').hide();
+        tbl_row.find('.btn_cancel').hide();
+        tbl_row.find('.terminal_dropdown').hide();
+        tbl_row.find('.customer_dropdown').hide();
+        tbl_row.find('.defaultValueTerminal').show();
+        tbl_row.find('.defaultValueCustomer').show();
+
+        //show edit button
+        tbl_row.find('.btn_edit').show();
+
+        //make the whole row editable
+        tbl_row.find('.row_data')
+          .attr('edit_type', 'click')
+          .removeClass('bg-warning')
+          .css('padding', '')
+
+        tbl_row.find('.row_data').each(function (index, val) {
+          $(this).html($(this).attr('original_entry'));
+        });
+      });
+      //--->button > cancel > end
+
+
+      //--->save whole row entery > start	
+      $(document).on('click', '.btn_save', function (event) {
+        event.preventDefault();
+        var tbl_row = $(this).closest('tr');
+
+        var row_id = tbl_row.attr('row_id');
+
+        //hide save and cacel buttons
+        tbl_row.find('.btn_save').hide();
+        tbl_row.find('.btn_cancel').hide();
+
+        //show edit button
+        tbl_row.find('.btn_edit').show();
+        //make the whole row editable
+        tbl_row.find('.row_data')
+          .attr('edit_type', 'click')
+          .removeClass('bg-warning')
+          .css('padding', '')
+
+        //--->get row data > start
+        var arr = {};
+        tbl_row.find('.row_data').each(function (index, val) {
+          var col_name = $(this).attr('col_name');
+          var col_val = $(this).html();
+          arr[col_name] = col_val;
+        });
+
+        tbl_row.find('.select_data').each(function (index, val) {
+          var col_name = $(this).attr('col_name');
+          var col_val = $(this).html();
+          arr[col_name] = col_val;
+        });
+        //--->get row data > end
+        //use the "arr"	object for your ajax call
+        $.extend(arr, { row_id: row_id });
+        //out put to show
+        $('.post_msg').html('<pre class="bg-success">' + JSON.stringify(arr, null, 2) + '</pre>')
+
+
+      });
+      //--->save whole row entery > end
+
+
+    }); 
+  </script>
+  <style>
+    select.form-control+.chosen-container.chosen-container-single .chosen-single {
+      display: block;
+      width: 100%;
+      height: 34px;
+      padding: 6px 12px;
+      font-size: 14px;
+      line-height: 1.428571429;
+      color: #555;
+      vertical-align: middle;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+      -webkit-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+      transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+      background-image: none;
+    }
+
+    select.form-control+.chosen-container.chosen-container-single .chosen-single div {
+      top: 4px;
+      color: #000;
+    }
+
+    select.form-control+.chosen-container .chosen-drop {
+      background-color: #FFF;
+      border: 1px solid #CCC;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 4px;
+      -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+      background-clip: padding-box;
+      margin: 2px 0 0;
+
+    }
+
+    select.form-control+.chosen-container .chosen-search input[type=text] {
+      display: block;
+      width: 100%;
+      height: 34px;
+      padding: 6px 12px;
+      font-size: 14px;
+      line-height: 1.428571429;
+      color: #555;
+      vertical-align: middle;
+      background-color: #FFF;
+      border: 1px solid #CCC;
+      border-radius: 4px;
+      -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+      -webkit-transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+      transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+      background-image: none;
+    }
+
+    select.form-control+.chosen-container .chosen-results {
+      margin: 2px 0 0;
+      padding: 5px 0;
+      font-size: 14px;
+      list-style: none;
+      background-color: #fff;
+      margin-bottom: 5px;
+    }
+
+    select.form-control+.chosen-container .chosen-results li,
+    select.form-control+.chosen-container .chosen-results li.active-result {
+      display: block;
+      padding: 3px 20px;
+      clear: both;
+      font-weight: normal;
+      line-height: 1.428571429;
+      color: #333;
+      white-space: nowrap;
+      background-image: none;
+    }
+
+    select.form-control+.chosen-container .chosen-results li:hover,
+    select.form-control+.chosen-container .chosen-results li.active-result:hover,
+    select.form-control+.chosen-container .chosen-results li.highlighted {
+      color: #FFF;
+      text-decoration: none;
+      background-color: #428BCA;
+      background-image: none;
+    }
+
+    select.form-control+.chosen-container-multi .chosen-choices {
+      display: block;
+      width: 100%;
+      min-height: 34px;
+      padding: 6px;
+      font-size: 14px;
+      line-height: 1.428571429;
+      color: #555;
+      vertical-align: middle;
+      background-color: #FFF;
+      border: 1px solid #CCC;
+      border-radius: 4px;
+      -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+      -webkit-transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+      transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+      background-image: none;
+    }
+
+    select.form-control+.chosen-container-multi .chosen-choices li.search-field input[type="text"] {
+      height: auto;
+      padding: 5px 0;
+    }
+
+    select.form-control+.chosen-container-multi .chosen-choices li.search-choice {
+
+      background-image: none;
+      padding: 3px 24px 3px 5px;
+      margin: 0 6px 0 0;
+      font-size: 14px;
+      font-weight: normal;
+      line-height: 1.428571429;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: middle;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      color: #333;
+      background-color: #FFF;
+      border-color: #CCC;
+    }
+
+    select.form-control+.chosen-container-multi .chosen-choices li.search-choice .search-choice-close {
+      top: 8px;
+      right: 6px;
+    }
+  </style>
+
+
+
+
+</body>
+
+</html>

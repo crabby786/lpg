@@ -1,0 +1,509 @@
+{
+    "DATA":[
+    {
+        "TERMINAL_ID": "A004",
+        "TERMINAL_NM": "RTJM TRM",
+        "CUSTOMER_ID": "540027",
+        "CUSTOMER_NM": "BHARAT PETROLEUM CORP. LTD.",
+        "REGION": "EAST",
+        "NOMINATION_TEMP_KEY": 4,
+        "CUSTOMER_LIFTING_PROPANE": 6,
+        "CUSTOMER_LIFTING_BUTANE": 9,
+        "TOLERANCE_PROPANE": 0,
+        "TOLERANCE_BUTANE": 0,
+        "SALES_ORDER_NOM_PROPANE": null,
+        "SALES_ORDER_NOM_BUTANE": null,
+        "SAP_NOM_KEY": "",
+        "SAP_NOM_STATUS": "",
+        "MODIFIED_DTTM": "  07MAY2023:11:51:30.000000",
+        "MODIFIED_BY": "unxsas",
+        "CREATED_DTTM": "  07MAY2023:11:51:30.000000",
+        "CREATED_BY": "unxsas",
+        "MESSAGE_TYPE": "",
+        "MESSAGE_TEXT": "",
+        "COLOAD_FLAG": 0,
+        "COLOAD_GROUP_NAME": "",
+        "CONTRACT_ID": "",
+        "CONTRACT_TYPE": "",
+        "NOMINATION_DATE": 2,
+        "DUMMY_CUSTOMER_NM": "",
+        "DUMMY_CONTRACT_ID": [
+            {
+                "label": "7040001341",
+                "value": "ZEPS",
+                "value2": "ZEPS"
+            },
+            {
+                "label": "7040001328",
+                "value": "ZEPT",
+                "value2": "ZEPT"
+            },
+            {
+                "label": "7040001343",
+                "value": "ZEPT",
+                "value2": "ZEPT"
+            },
+            {
+                "label": "7040001329",
+                "value": "ZEPS",
+                "value2": "ZEPS"
+            }
+        ],
+        "DUMMY_CONTRACT_TYPE": [
+            {
+                "label": "ZEPS",
+                "value": "ZEPS",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "ZEPT",
+                "value2": ""
+            }
+        ]
+    },
+    {
+        "TERMINAL_ID": "A004",
+        "TERMINAL_NM": "RTJM TRM",
+        "CUSTOMER_ID": "540011",
+        "CUSTOMER_NM": "NATIONAL FEDERATION OF AGRICULTURAL",
+        "REGION": "EAST",
+        "NOMINATION_TEMP_KEY": 9,
+        "CUSTOMER_LIFTING_PROPANE": 8,
+        "CUSTOMER_LIFTING_BUTANE": 10,
+        "TOLERANCE_PROPANE": 0,
+        "TOLERANCE_BUTANE": 0,
+        "SALES_ORDER_NOM_PROPANE": null,
+        "SALES_ORDER_NOM_BUTANE": null,
+        "SAP_NOM_KEY": "",
+        "SAP_NOM_STATUS": "",
+        "MODIFIED_DTTM": "  07MAY2023:11:51:30.000000",
+        "MODIFIED_BY": "unxsas",
+        "CREATED_DTTM": "  07MAY2023:11:51:30.000000",
+        "CREATED_BY": "unxsas",
+        "MESSAGE_TYPE": "E",
+        "MESSAGE_TEXT": "SAS Nomination Already Exists",
+        "COLOAD_FLAG": 1,
+        "COLOAD_GROUP_NAME": "GROUP",
+        "CONTRACT_ID": "7040001335",
+        "CONTRACT_TYPE": "ZEPT",
+        "NOMINATION_DATE": 14,
+        "DUMMY_CUSTOMER_NM": "",
+        "DUMMY_CONTRACT_ID": [
+            {
+                "label": "7040001335",
+                "value": "ZEPT",
+                "value2": "ZEPT"
+            }
+        ],
+        "DUMMY_CONTRACT_TYPE": [
+            {
+                "label": "ZEPT",
+                "value": "ZEPT",
+                "value2": ""
+            }
+        ]
+    },
+    {
+        "TERMINAL_ID": "A004",
+        "TERMINAL_NM": "RTJM TRM",
+        "CUSTOMER_ID": "540045",
+        "CUSTOMER_NM": "IWATANI CORPORATION",
+        "REGION": "EAST",
+        "NOMINATION_TEMP_KEY": 9,
+        "CUSTOMER_LIFTING_PROPANE": 12,
+        "CUSTOMER_LIFTING_BUTANE": 4,
+        "TOLERANCE_PROPANE": 0,
+        "TOLERANCE_BUTANE": 0,
+        "SALES_ORDER_NOM_PROPANE": null,
+        "SALES_ORDER_NOM_BUTANE": null,
+        "SAP_NOM_KEY": "",
+        "SAP_NOM_STATUS": "",
+        "MODIFIED_DTTM": "  07MAY2023:11:51:30.000000",
+        "MODIFIED_BY": "unxsas",
+        "CREATED_DTTM": "  07MAY2023:11:51:30.000000",
+        "CREATED_BY": "unxsas",
+        "MESSAGE_TYPE": "",
+        "MESSAGE_TEXT": "",
+        "COLOAD_FLAG": 1,
+        "COLOAD_GROUP_NAME": "GROUP",
+        "CONTRACT_ID": "8585736786",
+        "CONTRACT_TYPE": "ZEPS",
+        "NOMINATION_DATE": 14,
+        "DUMMY_CUSTOMER_NM": "",
+        "DUMMY_CONTRACT_ID": [
+            {
+                "label": "8585736786",
+                "value": "ZEPS",
+                "value2": "ZEPS"
+            }
+        ],
+        "DUMMY_CONTRACT_TYPE": [
+            {
+                "label": "ZEPS",
+                "value": "ZEPS",
+                "value2": ""
+            }
+        ]
+    },
+    {
+        "TERMINAL_ID": "A004",
+        "TERMINAL_NM": "RTJM TRM",
+        "CUSTOMER_ID": "540080",
+        "CUSTOMER_NM": "ASTOMOS ENERGY CORPORATION",
+        "REGION": "EAST",
+        "NOMINATION_TEMP_KEY": 9,
+        "CUSTOMER_LIFTING_PROPANE": 2,
+        "CUSTOMER_LIFTING_BUTANE": 8,
+        "TOLERANCE_PROPANE": 0,
+        "TOLERANCE_BUTANE": 0,
+        "SALES_ORDER_NOM_PROPANE": null,
+        "SALES_ORDER_NOM_BUTANE": null,
+        "SAP_NOM_KEY": "",
+        "SAP_NOM_STATUS": "",
+        "MODIFIED_DTTM": "  07MAY2023:11:51:30.000000",
+        "MODIFIED_BY": "unxsas",
+        "CREATED_DTTM": "  07MAY2023:11:51:30.000000",
+        "CREATED_BY": "unxsas",
+        "MESSAGE_TYPE": "",
+        "MESSAGE_TEXT": "",
+        "COLOAD_FLAG": 1,
+        "COLOAD_GROUP_NAME": "GROUP",
+        "CONTRACT_ID": "3818416303",
+        "CONTRACT_TYPE": "ZEPT",
+        "NOMINATION_DATE": 14,
+        "DUMMY_CUSTOMER_NM": "",
+        "DUMMY_CONTRACT_ID": [
+            {
+                "label": "3818416303",
+                "value": "ZEPT",
+                "value2": "ZEPT"
+            }
+        ],
+        "DUMMY_CONTRACT_TYPE": [
+            {
+                "label": "ZEPT",
+                "value": "ZEPT",
+                "value2": ""
+            }
+        ]
+    },
+    {
+        "TERMINAL_ID": "A004",
+        "TERMINAL_NM": "RTJM TRM",
+        "CUSTOMER_ID": "GROUP A",
+        "CUSTOMER_NM": "GROUP A",
+        "REGION": "EAST",
+        "NOMINATION_TEMP_KEY": 9,
+        "CUSTOMER_LIFTING_PROPANE": 22,
+        "CUSTOMER_LIFTING_BUTANE": 22,
+        "TOLERANCE_PROPANE": 0,
+        "TOLERANCE_BUTANE": 0,
+        "SALES_ORDER_NOM_PROPANE": null,
+        "SALES_ORDER_NOM_BUTANE": null,
+        "SAP_NOM_KEY": "",
+        "SAP_NOM_STATUS": "",
+        "MODIFIED_DTTM": "  07MAY2023:11:51:30.000000",
+        "MODIFIED_BY": "unxsas",
+        "CREATED_DTTM": "  07MAY2023:11:51:30.000000",
+        "CREATED_BY": "unxsas",
+        "MESSAGE_TYPE": "",
+        "MESSAGE_TEXT": "some msg",
+        "COLOAD_FLAG": 2,
+        "COLOAD_GROUP_NAME": "GROUP",
+        "CONTRACT_ID": "",
+        "CONTRACT_TYPE": "",
+        "NOMINATION_DATE": 14,
+        "DUMMY_CUSTOMER_NM": "",
+        "DUMMY_CONTRACT_ID": "",
+        "DUMMY_CONTRACT_TYPE": ""
+    },
+    {
+        "TERMINAL_ID": "A004",
+        "TERMINAL_NM": "RTJM TRM",
+        "CUSTOMER_ID": "530105",
+        "CUSTOMER_NM": "ARAMCOTRADINGCOMPANY",
+        "REGION": "EAST",
+        "NOMINATION_TEMP_KEY": 29,
+        "CUSTOMER_LIFTING_PROPANE": 11,
+        "CUSTOMER_LIFTING_BUTANE": 33,
+        "TOLERANCE_PROPANE": 0,
+        "TOLERANCE_BUTANE": 0,
+        "SALES_ORDER_NOM_PROPANE": null,
+        "SALES_ORDER_NOM_BUTANE": null,
+        "SAP_NOM_KEY": "",
+        "SAP_NOM_STATUS": "",
+        "MODIFIED_DTTM": "  07MAY2023:11:51:30.000000",
+        "MODIFIED_BY": "unxsas",
+        "CREATED_DTTM": "  07MAY2023:11:51:30.000000",
+        "CREATED_BY": "unxsas",
+        "MESSAGE_TYPE": "",
+        "MESSAGE_TEXT": "",
+        "COLOAD_FLAG": 0,
+        "COLOAD_GROUP_NAME": "DUMMY",
+        "CONTRACT_ID": "9304643711",
+        "CONTRACT_TYPE": "ZEPS",
+        "NOMINATION_DATE": 30,
+        "DUMMY_CUSTOMER_NM": [
+            {
+                "label": "",
+                "value": "PROPANE11_BUTANE33",
+                "value2": ""
+            },
+            {
+                "label": "ARAMCOTRADINGCOMPANY",
+                "value": "530105",
+                "value2": ""
+            },
+            {
+                "label": "ARAMCOTRADINGSINGAPOREPTELTD.",
+                "value": "530111",
+                "value2": ""
+            },
+            {
+                "label": "NATIONALFEDERATIONOFAGRICULTURAL",
+                "value": "540011",
+                "value2": ""
+            },
+            {
+                "label": "SKGASCO.LTD.",
+                "value": "540017",
+                "value2": ""
+            },
+            {
+                "label": "BHARATPETROLEUMCORP.LTD.",
+                "value": "540027",
+                "value2": ""
+            },
+            {
+                "label": "CPCCORPORATION,TAIWAN",
+                "value": "540036",
+                "value2": ""
+            }
+        ],
+        "DUMMY_CONTRACT_ID": [
+            {
+                "label": "9304643711",
+                "value": "ZEPS",
+                "value2": "530105"
+            },
+            {
+                "label": "4549059497",
+                "value": "ZEPS",
+                "value2": "530111"
+            },
+            {
+                "label": "7040001335",
+                "value": "ZEPT",
+                "value2": "540011"
+            },
+            {
+                "label": "3276083780",
+                "value": "ZEPT",
+                "value2": "540017"
+            },
+            {
+                "label": "7040001341",
+                "value": "ZEPS",
+                "value2": "540027"
+            },
+            {
+                "label": "7040001343",
+                "value": "ZEPT",
+                "value2": "540027"
+            },
+            {
+                "label": "7040001329",
+                "value": "ZEPS",
+                "value2": "540027"
+            },
+            {
+                "label": "7040001328",
+                "value": "ZEPT",
+                "value2": "540027"
+            },
+            {
+                "label": "9535133204",
+                "value": "ZEPT",
+                "value2": "540036"
+            },
+            {
+                "label": "5498143594",
+                "value": "ZEPT",
+                "value2": "540043"
+            },
+            {
+                "label": "8585736786",
+                "value": "ZEPS",
+                "value2": "540045"
+            },
+            {
+                "label": "2817586308",
+                "value": "ZEPT",
+                "value2": "540071"
+            },
+            {
+                "label": "3818416303",
+                "value": "ZEPT",
+                "value2": "540080"
+            },
+            {
+                "label": "3019959756",
+                "value": "ZEPT",
+                "value2": "540130"
+            },
+            {
+                "label": "7040001338",
+                "value": "ZEPT",
+                "value2": "540155"
+            },
+            {
+                "label": "7040001334",
+                "value": "ZEPT",
+                "value2": "540155"
+            },
+            {
+                "label": "7040001333",
+                "value": "ZEPS",
+                "value2": "540155"
+            },
+            {
+                "label": "7040001342",
+                "value": "ZEPT",
+                "value2": "540155"
+            },
+            {
+                "label": "2021299028",
+                "value": "ZEPS",
+                "value2": "540175"
+            },
+            {
+                "label": "5744296652",
+                "value": "ZEPT",
+                "value2": "540220"
+            },
+            {
+                "label": "7535833293",
+                "value": "ZEPT",
+                "value2": "540275"
+            },
+            {
+                "label": "9470520716",
+                "value": "ZEPS",
+                "value2": "540290"
+            },
+            {
+                "label": "2226774350",
+                "value": "ZEPS",
+                "value2": "540315"
+            },
+            {
+                "label": "4953481249",
+                "value": "ZEPT",
+                "value2": "540320"
+            }
+        ],
+        "DUMMY_CONTRACT_TYPE": [
+            {
+                "label": "ZEPS",
+                "value": "530105",
+                "value2": ""
+            },
+            {
+                "label": "ZEPS",
+                "value": "530111",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540011",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540017",
+                "value2": ""
+            },
+            {
+                "label": "ZEPS",
+                "value": "540027",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540027",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540036",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540043",
+                "value2": ""
+            },
+            {
+                "label": "ZEPS",
+                "value": "540045",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540071",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540080",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540130",
+                "value2": ""
+            },
+            {
+                "label": "ZEPS",
+                "value": "540155",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540155",
+                "value2": ""
+            },
+            {
+                "label": "ZEPS",
+                "value": "540175",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540220",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540275",
+                "value2": ""
+            },
+            {
+                "label": "ZEPS",
+                "value": "540290",
+                "value2": ""
+            },
+            {
+                "label": "ZEPS",
+                "value": "540315",
+                "value2": ""
+            },
+            {
+                "label": "ZEPT",
+                "value": "540320",
+                "value2": ""
+            }
+        ]
+    }
+]}
